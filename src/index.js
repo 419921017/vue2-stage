@@ -1,13 +1,17 @@
+import { initMixin } from "./init";
+
 /*
  * @Descripttion: your project
  * @version: 1.0
  * @Author: power_840
  * @Date: 2021-06-17 21:07:28
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-17 21:13:17
+ * @LastEditTime: 2021-06-17 21:25:51
  */
-let a = 1;
+function Vue(options) {
+  this._init(options);
+}
 
-console.log(a);
+initMixin(Vue);
 
-export { a };
+export default Vue;
