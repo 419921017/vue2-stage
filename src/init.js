@@ -4,7 +4,7 @@
  * @Author: power_840
  * @Date: 2021-06-17 21:24:30
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-21 20:42:40
+ * @LastEditTime: 2021-06-21 22:02:47
  */
 
 import { compileToFunction } from "./compiler";
@@ -36,7 +36,8 @@ export function initMixin(Vue) {
     if (!options.render) {
       let template = options.template;
       if (!template && el) {
-        template = el.outterHTML;
+        console.log("el", el);
+        template = el.outerHTML;
         let render = compileToFunction(template);
         options.render = render;
       }
