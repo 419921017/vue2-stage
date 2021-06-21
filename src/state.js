@@ -7,7 +7,7 @@ import { isFunction } from "./utils";
  * @Author: power_840
  * @Date: 2021-06-17 21:29:52
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-17 21:51:46
+ * @LastEditTime: 2021-06-21 20:10:58
  */
 export function initState(vm) {
   console.log("initState", vm.$options);
@@ -29,9 +29,23 @@ export function initState(vm) {
   // }
 }
 
+function proxy(vm, source, key) {
+  Object.defineProperty(vm, key, {
+    get() {
+      return vm[source][key];
+    },
+    set(newVal) {
+      vm[source][key] = newVal;
+    },
+  });
+}
+
 function initData(vm) {
   let data = vm.$options.data;
   data = vm._data = isFunction(data) ? data.call(vm) : data;
+  for (const key in data) {
+    proxy(vm, "_data", key);
+  }
   // console.log("initData", data);
   observe(data);
 }
