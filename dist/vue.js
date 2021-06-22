@@ -8,9 +8,9 @@
    * @Descripttion: your project
    * @version: 1.0
    * @Author: power_840
-   * @Date: 2021-06-21 20:40:53
+   * @Date: 2021-06-22 21:17:10
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-21 22:13:06
+   * @LastEditTime: 2021-06-22 21:18:21
    */
   // 标签名
   var ncname = "[a-zA-Z_][\\w\\-\\.]*"; // 获取标签名, match[1]
@@ -19,54 +19,152 @@
 
   var startTagOpen = new RegExp("^<".concat(qnameCapture)); // 结束标签
 
+  var endTag = new RegExp("^<\\/".concat(qnameCapture, "[^>]*>")); // 属性
+
   var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 标签关闭
 
   var startTagClose = /^\s*(\/?)>/; // {{}}
+  function parserHTML(html) {
+    var stack = [];
+    var root = null;
 
-  function parseHTML(html) {
-    function advance(len) {
-      html = html.substring(len);
-      console.log("advance", html);
+    function createASTElement(tag, attrs, parent) {
+      return {
+        tag: tag,
+        type: 1,
+        children: [],
+        parent: parent,
+        attrs: attrs
+      };
     }
 
-    function parseStartTag(html) {
-      console.log("parseStartTag", html);
-      var start = html.match(startTagOpen);
-      console.log("start", start);
+    function start(tag, attrs) {
+      // console.log("start", tag, attrs);
+      var parent = stack[stack.length - 1];
+      var element = createASTElement(tag, attrs, parent);
 
-      if (start) {
-        ({
-          tagName: start[1],
-          attrs: []
-        });
-        advance(start[0].length);
-
-        var attr;
-        console.log(" advanced", html); // 如果没有遇到标签结尾, 会一直找下去, 不停解析
-
-        console.log(html.match(startTagClose));
-        console.log(html.match(attribute));
-
-        while (!(html.match(startTagClose)) && (attr = html.match(attribute))) {
-          console.log("attr", attr);
-          advance(attr[0].length);
-        }
+      if (root == null) {
+        root = element;
       }
 
-      return false;
+      if (parent) {
+        // 元素指向父节点
+        element.parent = parent; // 父节点的children属性添加元素
+
+        parent.children.push(element);
+      }
+
+      stack.push(element);
     }
 
+    function end(tag) {
+      // console.log("end", tag);
+      var endTag = stack.pop();
 
-    var textEnd = html.indexOf("<");
+      if (endTag.tag != tag) {
+        console.log("标签出错");
+      }
+    }
 
-    if (textEnd === 0) {
-      parseStartTag(html);
-    } // }
+    function text(chars) {
+      // console.log("text", chars);
+      var parent = stack[stack.length - 1];
+      chars.replace(/\s/, "");
 
+      if (chars) {
+        parent.children.push({
+          type: 2,
+          text: chars
+        });
+      }
+    }
+
+    function advance(len) {
+      html = html.substring(len);
+    }
+
+    function parseStartTag() {
+      var start = html.match(startTagOpen);
+
+      if (start) {
+        var match = {
+          tagName: start[1],
+          attrs: []
+        };
+        advance(start[0].length); // console.log(match, html);
+
+        var _end;
+
+        var attr; // 不能是开始的结束标签
+        // 必须是属性
+
+        while (!(_end = html.match(startTagClose)) && (attr = html.match(attribute))) {
+          match.attrs.push({
+            name: attr[1],
+            value: attr[3] || attr[4] || attr[5]
+          });
+          advance(attr[0].length);
+        } // console.log("end", end);
+
+
+        if (_end) {
+          advance(_end[0].length);
+        }
+
+        return match;
+      } else {
+        return false;
+      }
+    }
+
+    while (html) {
+      var index = html.indexOf("<");
+
+      if (index === 0) {
+        // 解析开始标签
+        var startTagMatch = parseStartTag();
+
+        if (startTagMatch) {
+          start(startTagMatch.tagName, startTagMatch.attrs);
+          continue;
+        }
+
+        var endTagMatch = void 0;
+
+        if (endTagMatch = html.match(endTag)) {
+          end(endTagMatch[1]);
+          advance(endTagMatch[0].length);
+          continue;
+        }
+
+        break;
+      } // 文本
+
+
+      if (index > 0) {
+        var chars = html.substring(0, index);
+
+        if (chars) {
+          text(chars);
+          advance(chars.length);
+        }
+      }
+    }
+
+    console.log("root", root);
+    return root;
   }
 
+  /*
+   * @Descripttion: your project
+   * @version: 1.0
+   * @Author: power_840
+   * @Date: 2021-06-21 20:40:53
+   * @LastEditors: power_840
+   * @LastEditTime: 2021-06-22 21:18:02
+   */
   function compileToFunction(tempalte) {
-    parseHTML(tempalte);
+    parserHTML(tempalte);
   }
 
   function _typeof(obj) {
