@@ -4,7 +4,7 @@
  * @Author: power_840
  * @Date: 2021-06-21 20:40:53
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-22 21:36:04
+ * @LastEditTime: 2021-06-23 21:16:27
  */
 
 import { generate } from "./generate";
@@ -16,4 +16,7 @@ export function compileToFunction(tempalte) {
   let code = generate(ast);
   console.log("code", code);
   // html => ast(只能描述语法) => render函数 => vdom(增加额外属性) => 生成真实DOM
+  // new Function + width
+  let render = new Function(`with(this) {return ${code}}`);
+  return render;
 }

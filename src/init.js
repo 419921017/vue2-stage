@@ -4,10 +4,11 @@
  * @Author: power_840
  * @Date: 2021-06-17 21:24:30
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-21 22:02:47
+ * @LastEditTime: 2021-06-23 21:19:06
  */
 
 import { compileToFunction } from "./compiler";
+import { mountComponent } from "./lifecycle";
 import { initState } from "./state";
 
 /**
@@ -42,5 +43,8 @@ export function initMixin(Vue) {
         options.render = render;
       }
     }
+    console.log(options.render);
+    // 组件的挂载流程
+    mountComponent(vm, el);
   };
 }
