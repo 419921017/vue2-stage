@@ -4,7 +4,7 @@
  * @Author: power_840
  * @Date: 2021-06-17 21:13:00
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-21 20:14:30
+ * @LastEditTime: 2021-06-23 21:05:18
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,10 @@
     <script src="./vue.js"></script>
   </head>
   <body>
-    <div id="app">{{name}}</div>
+    <div id="app" style="color: red; background-color: burlywood">
+      <span>hello</span>
+      beautiful {{name}} world
+    </div>
     <script>
       let vm = new Vue({
         el: "#app",

@@ -8,6 +8,90 @@
    * @Descripttion: your project
    * @version: 1.0
    * @Author: power_840
+   * @Date: 2021-06-22 21:30:18
+   * @LastEditors: power_840
+   * @LastEditTime: 2021-06-23 21:04:04
+   */
+  var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;
+
+  function genProps(attrs) {
+    var str = "";
+
+    for (var i = 0; i < attrs.length; i++) {
+      var attr = attrs[i];
+
+      if (attr.name === "style") {
+        (function () {
+          var styleObj = {};
+          attr.value.replace(/([^;:]+)\:([^;:]+)/g, function () {
+            styleObj[arguments[1]] = arguments[2];
+          });
+          attr.value = styleObj;
+        })();
+      }
+
+      str += "".concat(attr.name, ": ").concat(JSON.stringify(attr.value), ",");
+    }
+
+    return "{".concat(str.slice(0, -1), "}");
+  }
+
+  function genChildren(el) {
+    var children = el.children;
+
+    if (children) {
+      return children.map(function (child) {
+        return gen(child);
+      }).join(",");
+    }
+
+    return false;
+  }
+
+  function gen(el) {
+    if (el.type == 1) {
+      return generate(el);
+    } else {
+      var text = el.text.trim();
+
+      if (!defaultTagRE.test(text)) {
+        return "_v('".concat(text, "')");
+      } else {
+        var tokens = [];
+        var match; // exec和正则中的g冲突, 每次操作的时候都要重置成0
+
+        var lastIndex = defaultTagRE.lastIndex = 0;
+
+        while (match = defaultTagRE.exec(text)) {
+          var index = match.index;
+
+          if (index > lastIndex) {
+            tokens.push(JSON.stringify(text.slice(lastIndex, index)));
+          }
+
+          tokens.push("_s(".concat(match[1].trim(), ")"));
+          lastIndex = index + match[0].length;
+        }
+
+        if (lastIndex < text.length) {
+          tokens.push(JSON.stringify(text.slice(lastIndex)));
+        }
+
+        return "_v(".concat(tokens.join("+"), ")");
+      }
+    }
+  }
+
+  function generate(el) {
+    var children = genChildren(el);
+    var code = "_c('".concat(el.tag, "',").concat(el.attrs && el.attrs.length > 0 ? genProps(el.attrs) : "undefined").concat(children ? ",".concat(children) : "", ")");
+    return code;
+  }
+
+  /*
+   * @Descripttion: your project
+   * @version: 1.0
+   * @Author: power_840
    * @Date: 2021-06-22 21:17:10
    * @LastEditors: power_840
    * @LastEditTime: 2021-06-22 21:18:21
@@ -161,10 +245,12 @@
    * @Author: power_840
    * @Date: 2021-06-21 20:40:53
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-22 21:18:02
+   * @LastEditTime: 2021-06-22 21:36:04
    */
   function compileToFunction(tempalte) {
-    parserHTML(tempalte);
+    var ast = parserHTML(tempalte);
+    var code = generate(ast);
+    console.log("code", code); // html => ast(只能描述语法) => render函数 => vdom(增加额外属性) => 生成真实DOM
   }
 
   function _typeof(obj) {
