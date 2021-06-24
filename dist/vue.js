@@ -402,9 +402,44 @@
    * @Descripttion: your project
    * @version: 1.0
    * @Author: power_840
+   * @Date: 2021-06-24 21:33:35
+   * @LastEditors: power_840
+   * @LastEditTime: 2021-06-24 21:39:22
+   */
+  var queue = [];
+  var has = {};
+  var pending$1 = false;
+  function queueWatcher(watcher) {
+    var id = watcher;
+
+    if (has[id] == null) {
+      queue.push(watcher);
+      has[id] = true;
+
+      if (!pending$1) {
+        setTimeout(flushSchedulerQueue, 0);
+        pending$1 = true;
+      }
+    }
+  }
+
+  function flushSchedulerQueue() {
+    for (var i = 0; i < queue.length; i++) {
+      queue[i].run();
+    }
+
+    queue = [];
+    has = {};
+    pending$1 = false;
+  }
+
+  /*
+   * @Descripttion: your project
+   * @version: 1.0
+   * @Author: power_840
    * @Date: 2021-06-24 20:25:22
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-24 21:19:45
+   * @LastEditTime: 2021-06-24 21:38:12
    */
 
   var id = 0;
@@ -454,12 +489,84 @@
     }, {
       key: "update",
       value: function update() {
+        // this.get();
+        queueWatcher(this);
+      }
+    }, {
+      key: "run",
+      value: function run() {
         this.get();
       }
     }]);
 
     return Watcher;
-  }();
+  }(); // 将更新功能封装成了一个watcher
+
+  /*
+   * @Descripttion: your project
+   * @version: 1.0
+   * @Author: power_840
+   * @Date: 2021-06-17 21:35:20
+   * @LastEditors: power_840
+   * @LastEditTime: 2021-06-24 22:00:49
+   */
+  var isFunction = function isFunction(fn) {
+    return typeof fn === "function";
+  };
+  var isObject = function isObject(obj) {
+    return _typeof(obj) === "object" && obj !== null;
+  };
+  var isArray = function isArray(arr) {
+    return Array.isArray(arr);
+  };
+  var callbacks = [];
+  var pending = false;
+
+  var flushCallbacks = function flushCallbacks() {
+    callbacks.forEach(function (cb) {
+      return cb();
+    });
+    pending = false;
+  };
+
+  function timer(flushCallbacks) {
+    var timerFn = function timerFn() {};
+
+    if (Promise) {
+      timerFn = function timerFn() {
+        Promise.resolve().then(flushCallbacks);
+      };
+    } else if (MutationObserver) {
+      var textNode = document.createTextNode("1");
+      var observe = new MutationObserver(flushCallbacks);
+      observe.observe(textNode, {
+        characterData: true
+      });
+
+      timerFn = function timerFn() {
+        textNode.textContent = "3";
+      };
+    } else if (setImmediate) {
+      timerFn = function timerFn() {
+        setImmediate(flushCallbacks);
+      };
+    } else {
+      timerFn = function timerFn() {
+        setTimeout(flushCallbacks);
+      };
+    }
+
+    timerFn();
+  }
+
+  function nextTick(cb) {
+    callbacks.push(cb);
+
+    if (!pending) {
+      timer(flushCallbacks);
+      pending = true;
+    }
+  }
 
   /*
    * @Descripttion: your project
@@ -467,7 +574,7 @@
    * @Author: power_840
    * @Date: 2021-06-23 21:18:30
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-24 21:08:27
+   * @LastEditTime: 2021-06-24 21:49:08
    */
   function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
@@ -475,6 +582,8 @@
       var vm = this;
       vm.$el = patch(vm.$el, vnode);
     };
+
+    Vue.prototype.$nextTick = nextTick;
   }
   function mountComponent(vm, el) {
     // 更新函数, 数据变化后会再次调用
@@ -491,24 +600,6 @@
       console.log("udpate");
     }, true);
   }
-
-  /*
-   * @Descripttion: your project
-   * @version: 1.0
-   * @Author: power_840
-   * @Date: 2021-06-17 21:35:20
-   * @LastEditors: power_840
-   * @LastEditTime: 2021-06-21 20:45:23
-   */
-  var isFunction = function isFunction(fn) {
-    return typeof fn === "function";
-  };
-  var isObject = function isObject(obj) {
-    return _typeof(obj) === "object" && obj !== null;
-  };
-  var isArray = function isArray(arr) {
-    return Array.isArray(arr);
-  };
 
   /*
    * @Descripttion: your project

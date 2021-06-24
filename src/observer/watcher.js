@@ -1,4 +1,5 @@
 import { popTarget, pushTarget } from "./dep";
+import { queueWatcher } from "./scheduler";
 
 /*
  * @Descripttion: your project
@@ -6,7 +7,7 @@ import { popTarget, pushTarget } from "./dep";
  * @Author: power_840
  * @Date: 2021-06-24 20:25:22
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 21:19:45
+ * @LastEditTime: 2021-06-24 21:38:12
  */
 let id = 0;
 class Watcher {
@@ -45,8 +46,19 @@ class Watcher {
     }
   }
   update() {
+    // this.get();
+    queueWatcher(this);
+  }
+  run() {
     this.get();
   }
 }
 
+// 将更新功能封装成了一个watcher
+// 渲染页面前, 会将当前watcher放到Dep类上
+// 在vue找那个渲染页面使用的属性, 需要进行依赖收集, 收集对象的渲染watcher
+// 取值时, 给每个属性都加了dep属性, 用于存储这个渲染watcher, 同一个watcher会对应多个dep
+// 每给属性可能对应多个视图(多个watcher), 一个属性对应多个watcher
+// dep.depend(), 通知dep存放watcher => Dep.target.addDep(), 通知watcher存放dep
+// dep和wathcer是双向取值的
 export default Watcher;

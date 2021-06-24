@@ -4,11 +4,12 @@
  * @Author: power_840
  * @Date: 2021-06-23 21:18:30
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 21:08:27
+ * @LastEditTime: 2021-06-24 21:49:08
  */
 
 import { patch } from "./vdom/patch";
 import Watcher from "./observer/watcher";
+import { nextTick } from "./utils";
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
@@ -16,6 +17,7 @@ export function lifecycleMixin(Vue) {
     const vm = this;
     vm.$el = patch(vm.$el, vnode);
   };
+  Vue.prototype.$nextTick = nextTick;
 }
 
 export function mountComponent(vm, el) {
