@@ -6,7 +6,7 @@ import { createElement, createTextElement } from "./vdom";
  * @Author: power_840
  * @Date: 2021-06-23 21:23:10
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-23 21:33:23
+ * @LastEditTime: 2021-06-24 19:59:20
  */
 export function renderMixin(Vue) {
   Vue.prototype._c = function (tag, data, ...children) {
@@ -17,12 +17,16 @@ export function renderMixin(Vue) {
     return createTextElement(this, text);
   };
   Vue.prototype._s = function (val) {
-    return JSON.stringify(val);
+    if (typeof val === "object") {
+      return JSON.stringify(val);
+    }
+    return val;
   };
   Vue.prototype._render = function () {
     console.log("_render");
     const vm = this;
     let render = vm.$options.render;
     let vnode = render.call(vm);
+    return vnode;
   };
 }

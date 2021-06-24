@@ -10,7 +10,7 @@
    * @Author: power_840
    * @Date: 2021-06-22 21:30:18
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-23 21:04:04
+   * @LastEditTime: 2021-06-24 20:12:11
    */
   var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;
 
@@ -24,7 +24,7 @@
         (function () {
           var styleObj = {};
           attr.value.replace(/([^;:]+)\:([^;:]+)/g, function () {
-            styleObj[arguments[1]] = arguments[2];
+            styleObj[arguments[1].trim()] = arguments[2].trim();
           });
           attr.value = styleObj;
         })();
@@ -261,13 +261,67 @@
    * @Descripttion: your project
    * @version: 1.0
    * @Author: power_840
+   * @Date: 2021-06-24 19:46:04
+   * @LastEditors: power_840
+   * @LastEditTime: 2021-06-24 20:10:54
+   */
+  function patch(oldVnode, vnode) {
+    if (oldVnode.nodeType == 1) {
+      console.log("真实节点");
+      var parentElm = oldVnode.parentNode;
+      var elm = createEle(vnode);
+      parentElm.insertBefore(elm, oldVnode.nextSibling);
+      parentElm.removeChild(oldVnode);
+    }
+  }
+  function createEle(vnode) {
+    var tag = vnode.tag;
+        vnode.data;
+        var children = vnode.children,
+        text = vnode.text;
+        vnode.vm;
+
+    if (typeof tag === "string") {
+      vnode.el = document.createElement(tag);
+      updateProperties(vnode);
+      children.forEach(function (child) {
+        vnode.el.appendChild(createEle(child));
+      });
+    } else {
+      vnode.el = document.createTextNode(text);
+    }
+
+    return vnode.el;
+  }
+
+  function updateProperties(vnode) {
+    var newProps = vnode.data || {};
+    var el = vnode.el;
+
+    for (var key in newProps) {
+      if (key == "style") {
+        for (var styleName in newProps.style) {
+          el.style[styleName] = newProps.style[styleName];
+        }
+      } else {
+        el.setAttribute(key, newProps[key]);
+      }
+    }
+  }
+
+  /*
+   * @Descripttion: your project
+   * @version: 1.0
+   * @Author: power_840
    * @Date: 2021-06-23 21:18:30
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-23 21:24:15
+   * @LastEditTime: 2021-06-24 19:59:41
    */
   function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
       console.log("_update");
+      var vm = this;
+      patch(vm.$el, vnode);
     };
   }
   function mountComponent(vm, el) {
@@ -515,7 +569,7 @@
    * @Author: power_840
    * @Date: 2021-06-17 21:24:30
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-23 21:19:06
+   * @LastEditTime: 2021-06-24 19:44:19
    */
   /**
    *
@@ -541,6 +595,7 @@
       var vm = this;
       var options = vm.$options;
       el = document.querySelector(el);
+      vm.$el = el;
 
       if (!options.render) {
         var template = options.template;
@@ -597,7 +652,7 @@
    * @Author: power_840
    * @Date: 2021-06-23 21:23:10
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-23 21:33:23
+   * @LastEditTime: 2021-06-24 19:59:20
    */
 
   function renderMixin(Vue) {
@@ -615,14 +670,19 @@
     };
 
     Vue.prototype._s = function (val) {
-      return JSON.stringify(val);
+      if (_typeof(val) === "object") {
+        return JSON.stringify(val);
+      }
+
+      return val;
     };
 
     Vue.prototype._render = function () {
       console.log("_render");
       var vm = this;
       var render = vm.$options.render;
-      render.call(vm);
+      var vnode = render.call(vm);
+      return vnode;
     };
   }
 

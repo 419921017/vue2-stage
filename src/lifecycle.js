@@ -4,12 +4,16 @@
  * @Author: power_840
  * @Date: 2021-06-23 21:18:30
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-23 21:24:15
+ * @LastEditTime: 2021-06-24 19:59:41
  */
+
+import { patch } from "./vdom/patch";
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
     console.log("_update");
+    const vm = this;
+    patch(vm.$el, vnode);
   };
 }
 

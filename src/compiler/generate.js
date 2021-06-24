@@ -4,7 +4,7 @@
  * @Author: power_840
  * @Date: 2021-06-22 21:30:18
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-23 21:04:04
+ * @LastEditTime: 2021-06-24 20:12:11
  */
 const defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;
 
@@ -15,7 +15,7 @@ function genProps(attrs) {
     if (attr.name === "style") {
       let styleObj = {};
       attr.value.replace(/([^;:]+)\:([^;:]+)/g, function () {
-        styleObj[arguments[1]] = arguments[2];
+        styleObj[arguments[1].trim()] = arguments[2].trim();
       });
       attr.value = styleObj;
     }
