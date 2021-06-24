@@ -1,5 +1,6 @@
 import { isArray, isObject } from "../utils";
 import arrayMethods from "./array";
+import Dep from "./dep";
 
 /*
  * @Descripttion: your project
@@ -7,7 +8,7 @@ import arrayMethods from "./array";
  * @Author: power_840
  * @Date: 2021-06-17 21:38:12
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-21 21:21:41
+ * @LastEditTime: 2021-06-24 21:10:10
  */
 class Observer {
   constructor(data) {
@@ -43,8 +44,15 @@ function defineReactive(data, key, value) {
   // value有可能是对象
   // 如果value是对象, 需要进行递归处理
   observe(value);
+  // 每个属性都对应一个dep
+  let dep = new Dep();
   Object.defineProperty(data, key, {
     get() {
+      // 如果Dep.target有值, 说明属性在模板中被使用了
+      if (Dep.target) {
+        //
+        dep.depend();
+      }
       return value;
     },
     set(newVal) {
@@ -52,6 +60,7 @@ function defineReactive(data, key, value) {
       // 设置了新对象, 需要重新进行劫持
       observe(newVal);
       value = newVal;
+      dep.notify();
     },
   });
 }

@@ -4,7 +4,7 @@
  * @Author: power_840
  * @Date: 2021-06-24 19:46:04
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 20:10:54
+ * @LastEditTime: 2021-06-24 20:22:35
  */
 export function patch(oldVnode, vnode) {
   if (oldVnode.nodeType == 1) {
@@ -14,6 +14,7 @@ export function patch(oldVnode, vnode) {
     let elm = createEle(vnode);
     parentElm.insertBefore(elm, oldVnode.nextSibling);
     parentElm.removeChild(oldVnode);
+    return elm;
   }
 }
 

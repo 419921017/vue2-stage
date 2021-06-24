@@ -4,16 +4,17 @@
  * @Author: power_840
  * @Date: 2021-06-23 21:18:30
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 19:59:41
+ * @LastEditTime: 2021-06-24 21:08:27
  */
 
 import { patch } from "./vdom/patch";
+import Watcher from "./observer/watcher";
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
     console.log("_update");
     const vm = this;
-    patch(vm.$el, vnode);
+    vm.$el = patch(vm.$el, vnode);
   };
 }
 
@@ -24,5 +25,15 @@ export function mountComponent(vm, el) {
     vm._update(vm._render());
     // 用虚拟dom生成真实dom
   };
-  updateComponent();
+  // updateComponent();
+  // true表示这是一个渲染watcher
+  // 每个组件都对一个渲染watcher
+  new Watcher(
+    vm,
+    updateComponent,
+    () => {
+      console.log("udpate");
+    },
+    true
+  );
 }
