@@ -1,4 +1,5 @@
-import { createElement, createTextElement } from "./vdom";
+import { isObject } from './utils';
+import { createElement, createTextElement } from './vdom';
 
 /*
  * @Descripttion: your project
@@ -17,13 +18,13 @@ export function renderMixin(Vue) {
     return createTextElement(this, text);
   };
   Vue.prototype._s = function (val) {
-    if (typeof val === "object") {
+    if (isObject(val)) {
       return JSON.stringify(val);
     }
     return val;
   };
   Vue.prototype._render = function () {
-    console.log("_render");
+    console.log('_render');
     const vm = this;
     let render = vm.$options.render;
     let vnode = render.call(vm);
