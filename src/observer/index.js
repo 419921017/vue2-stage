@@ -1,6 +1,6 @@
-import { isArray, isObject } from "../utils";
-import arrayMethods from "./array";
-import Dep from "./dep";
+import { isArray, isObject } from '../utils';
+import arrayMethods from './array';
+import Dep from './dep';
 
 /*
  * @Descripttion: your project
@@ -14,7 +14,7 @@ class Observer {
   constructor(data) {
     // 给对象和数组添加一个自定义属性
     // __ob__ 会造成死循环
-    Object.defineProperty(data, "__ob__", {
+    Object.defineProperty(data, '__ob__', {
       value: this,
       // 这属性不能被枚举, 无法被循环到
       enumerable: false,
@@ -66,10 +66,12 @@ function defineReactive(data, key, value) {
 }
 
 export function observe(data) {
-  console.log("observe", data);
+  // console.log("observe", data);
+  // 不是对象不处理
   if (!isObject(data)) {
     return;
   }
+  // 已经响应式的对象不处理
   if (data.__ob__) {
     return;
   }

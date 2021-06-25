@@ -402,13 +402,85 @@
    * @Descripttion: your project
    * @version: 1.0
    * @Author: power_840
+   * @Date: 2021-06-17 21:35:20
+   * @LastEditors: power_840
+   * @LastEditTime: 2021-06-24 22:00:49
+   */
+  var isFunction = function isFunction(fn) {
+    return typeof fn === 'function';
+  };
+  var isObject = function isObject(obj) {
+    return _typeof(obj) === 'object' && obj !== null;
+  };
+  var isArray = function isArray(arr) {
+    return Array.isArray(arr);
+  };
+  var callbacks = [];
+  var pending$1 = false;
+
+  var flushCallbacks = function flushCallbacks() {
+    callbacks.forEach(function (cb) {
+      return cb();
+    });
+    pending$1 = false;
+  };
+  /**
+   * 调度系统的优雅降级
+   *
+   * @param {*} flushCallbacks
+   */
+
+
+  function timer(flushCallbacks) {
+    var timerFn = function timerFn() {};
+
+    if (Promise) {
+      timerFn = function timerFn() {
+        Promise.resolve().then(flushCallbacks);
+      };
+    } else if (MutationObserver) {
+      var textNode = document.createTextNode('1');
+      var observe = new MutationObserver(flushCallbacks);
+      observe.observe(textNode, {
+        characterData: true
+      });
+
+      timerFn = function timerFn() {
+        textNode.textContent = '3';
+      };
+    } else if (setImmediate) {
+      timerFn = function timerFn() {
+        setImmediate(flushCallbacks);
+      };
+    } else {
+      timerFn = function timerFn() {
+        setTimeout(flushCallbacks);
+      };
+    }
+
+    timerFn();
+  }
+
+  function nextTick(cb) {
+    callbacks.push(cb);
+
+    if (!pending$1) {
+      timer(flushCallbacks);
+      pending$1 = true;
+    }
+  }
+
+  /*
+   * @Descripttion: your project
+   * @version: 1.0
+   * @Author: power_840
    * @Date: 2021-06-24 21:33:35
    * @LastEditors: power_840
    * @LastEditTime: 2021-06-24 21:39:22
    */
   var queue = [];
   var has = {};
-  var pending$1 = false;
+  var pending = false;
   function queueWatcher(watcher) {
     var id = watcher;
 
@@ -416,9 +488,9 @@
       queue.push(watcher);
       has[id] = true;
 
-      if (!pending$1) {
-        setTimeout(flushSchedulerQueue, 0);
-        pending$1 = true;
+      if (!pending) {
+        nextTick(flushSchedulerQueue);
+        pending = true;
       }
     }
   }
@@ -430,7 +502,7 @@
 
     queue = [];
     has = {};
-    pending$1 = false;
+    pending = false;
   }
 
   /*
@@ -501,72 +573,6 @@
 
     return Watcher;
   }(); // 将更新功能封装成了一个watcher
-
-  /*
-   * @Descripttion: your project
-   * @version: 1.0
-   * @Author: power_840
-   * @Date: 2021-06-17 21:35:20
-   * @LastEditors: power_840
-   * @LastEditTime: 2021-06-24 22:00:49
-   */
-  var isFunction = function isFunction(fn) {
-    return typeof fn === "function";
-  };
-  var isObject = function isObject(obj) {
-    return _typeof(obj) === "object" && obj !== null;
-  };
-  var isArray = function isArray(arr) {
-    return Array.isArray(arr);
-  };
-  var callbacks = [];
-  var pending = false;
-
-  var flushCallbacks = function flushCallbacks() {
-    callbacks.forEach(function (cb) {
-      return cb();
-    });
-    pending = false;
-  };
-
-  function timer(flushCallbacks) {
-    var timerFn = function timerFn() {};
-
-    if (Promise) {
-      timerFn = function timerFn() {
-        Promise.resolve().then(flushCallbacks);
-      };
-    } else if (MutationObserver) {
-      var textNode = document.createTextNode("1");
-      var observe = new MutationObserver(flushCallbacks);
-      observe.observe(textNode, {
-        characterData: true
-      });
-
-      timerFn = function timerFn() {
-        textNode.textContent = "3";
-      };
-    } else if (setImmediate) {
-      timerFn = function timerFn() {
-        setImmediate(flushCallbacks);
-      };
-    } else {
-      timerFn = function timerFn() {
-        setTimeout(flushCallbacks);
-      };
-    }
-
-    timerFn();
-  }
-
-  function nextTick(cb) {
-    callbacks.push(cb);
-
-    if (!pending) {
-      timer(flushCallbacks);
-      pending = true;
-    }
-  }
 
   /*
    * @Descripttion: your project
@@ -658,7 +664,7 @@
 
       // 给对象和数组添加一个自定义属性
       // __ob__ 会造成死循环
-      Object.defineProperty(data, "__ob__", {
+      Object.defineProperty(data, '__ob__', {
         value: this,
         // 这属性不能被枚举, 无法被循环到
         enumerable: false
@@ -721,11 +727,12 @@
   }
 
   function observe(data) {
-    console.log("observe", data);
-
+    // console.log("observe", data);
+    // 不是对象不处理
     if (!isObject(data)) {
       return;
-    }
+    } // 已经响应式的对象不处理
+
 
     if (data.__ob__) {
       return;

@@ -7,6 +7,8 @@
  * @LastEditTime: 2021-06-24 21:39:22
  */
 
+import { nextTick } from '../utils';
+
 let queue = [];
 let has = {};
 
@@ -17,7 +19,7 @@ export function queueWatcher(watcher) {
     queue.push(watcher);
     has[id] = true;
     if (!pending) {
-      setTimeout(flushSchedulerQueue, 0);
+      nextTick(flushSchedulerQueue, 0);
       pending = true;
     }
   }
