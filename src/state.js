@@ -32,8 +32,9 @@ export function initState(vm) {
     initData(vm);
   }
 
-  // if (opts.computed) {
-  // }
+  if (opts.computed) {
+    initComputed(vm, opts.computed);
+  }
 
   if (opts.watch) {
     initWatch(vm, opts.watch);
@@ -61,7 +62,7 @@ function initData(vm) {
 }
 
 function initWatch(vm, watch) {
-  Object.keys((key) => {
+  Object.keys(watch).forEach((key) => {
     const handler = watch[key];
     if (isArray(handler)) {
       for (const fn of handler) {
@@ -75,4 +76,46 @@ function initWatch(vm, watch) {
 
 function createWatcher(vm, key, handler) {
   return vm.$watch(key, handler);
+}
+
+function initComputed(vm, computed) {
+  // 包含实例上所有的watcher属性
+  const watchers = (vm._computedWatchers = {});
+  Object.keys(computed).forEach((key) => {
+    const userDef = computed[key];
+    let getter = isFunction(userDef) ? userDef : userDef.get;
+    console.log('getter', getter);
+    // 每个计算属性, 本质上是一个watcher
+    watchers[key] = new Watcher(vm, getter, () => {}, {
+      lazy: true,
+    });
+    defineComputed(vm, key, userDef);
+  });
+}
+
+function defineComputed(vm, key, userDef) {
+  let sharedProperty = {};
+  if (isFunction(userDef)) {
+    sharedProperty.get = userDef;
+  } else {
+    sharedProperty.get = createComputedGetter(key);
+    sharedProperty.set = userDef.set;
+  }
+  // computed本质上就是是个 Object.defineProperty
+  Object.defineProperty(vm, key, sharedProperty);
+}
+
+function createComputedGetter(key) {
+  // 取计算属性的值
+  return function computedGetter() {
+    // 这个watcher中包含了getter
+    let watcher = this._computedWatchers[key];
+    // 根据dirty属性来判断是否需要重新求值
+    // 脏就是意味着需要调用用户的getter
+    // 不脏就不用调用用户的getter
+    if (watcher.dirty) {
+      watcher.evaluate();
+    }
+    return watcher.value;
+  };
 }

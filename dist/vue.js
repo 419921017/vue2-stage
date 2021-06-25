@@ -342,6 +342,80 @@
     return Constructor;
   }
 
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
+  function _createForOfIteratorHelper(o, allowArrayLike) {
+    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
+
+    if (!it) {
+      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+        if (it) o = it;
+        var i = 0;
+
+        var F = function () {};
+
+        return {
+          s: F,
+          n: function () {
+            if (i >= o.length) return {
+              done: true
+            };
+            return {
+              done: false,
+              value: o[i++]
+            };
+          },
+          e: function (e) {
+            throw e;
+          },
+          f: F
+        };
+      }
+
+      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    }
+
+    var normalCompletion = true,
+        didErr = false,
+        err;
+    return {
+      s: function () {
+        it = it.call(o);
+      },
+      n: function () {
+        var step = it.next();
+        normalCompletion = step.done;
+        return step;
+      },
+      e: function (e) {
+        didErr = true;
+        err = e;
+      },
+      f: function () {
+        try {
+          if (!normalCompletion && it.return != null) it.return();
+        } finally {
+          if (didErr) throw err;
+        }
+      }
+    };
+  }
+
   /*
    * @Descripttion: your project
    * @version: 1.0
@@ -520,7 +594,10 @@
       this.vm = vm;
       this.exprOrFn = exprOrFn; // 是不是用户watcher
 
-      this.user = !!options.user;
+      this.user = !!options.user; // 使用lazy区分是否是计算属性
+
+      this.lazy = !!options.lazy;
+      this.dirty = !!options.lazy;
       this.cb = cb;
       this.options = options;
       this.id = id++; // exprOrFn一调用就会取值
@@ -544,7 +621,7 @@
       this.deps = [];
       this.depsId = new Set(); // 默认的初始化操作
 
-      this.value = this.get();
+      this.value = this.lazy ? undefined : this.get();
     } // 数据更新时, 重新调用getter
 
 
@@ -555,7 +632,7 @@
         // Dep.target = watcher
         pushTarget(this); // render()方法会去vm上取值, vm._update(vm._render())
 
-        var value = this.getter(); // Dep.target = null, 如果Dep.target有值, 说明值在模板中使用了
+        var value = this.getter.call(this.vm); // Dep.target = null, 如果Dep.target有值, 说明值在模板中使用了
 
         popTarget();
         return value;
@@ -588,6 +665,13 @@
         this.value = newValue;
         console.log('this.cb', this.cb);
         this.user && this.cb.call(this.vm, newValue, oldValue);
+      }
+    }, {
+      key: "evaluate",
+      value: function evaluate() {
+        // 取过值了
+        this.dirty = false;
+        this.value = this.get();
       }
     }]);
 
@@ -822,9 +906,11 @@
 
     if (opts.data) {
       initData(vm);
-    } // if (opts.computed) {
-    // }
+    }
 
+    if (opts.computed) {
+      initComputed(vm, opts.computed);
+    }
 
     if (opts.watch) {
       initWatch(vm, opts.watch);
@@ -854,6 +940,76 @@
   }
 
   function initWatch(vm, watch) {
+    Object.keys(watch).forEach(function (key) {
+      var handler = watch[key];
+
+      if (isArray(handler)) {
+        var _iterator = _createForOfIteratorHelper(handler),
+            _step;
+
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var fn = _step.value;
+            createWatcher(vm, key, fn);
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+      } else {
+        createWatcher(vm, key, handler);
+      }
+    });
+  }
+
+  function createWatcher(vm, key, handler) {
+    return vm.$watch(key, handler);
+  }
+
+  function initComputed(vm, computed) {
+    // 包含实例上所有的watcher属性
+    var watchers = vm._computedWatchers = {};
+    Object.keys(computed).forEach(function (key) {
+      var userDef = computed[key];
+      var getter = isFunction(userDef) ? userDef : userDef.get;
+      console.log('getter', getter); // 每个计算属性, 本质上是一个watcher
+
+      watchers[key] = new Watcher(vm, getter, function () {}, {
+        lazy: true
+      });
+      defineComputed(vm, key, userDef);
+    });
+  }
+
+  function defineComputed(vm, key, userDef) {
+    var sharedProperty = {};
+
+    if (isFunction(userDef)) {
+      sharedProperty.get = userDef;
+    } else {
+      sharedProperty.get = createComputedGetter(key);
+      sharedProperty.set = userDef.set;
+    } // computed本质上就是是个 Object.defineProperty
+
+
+    Object.defineProperty(vm, key, sharedProperty);
+  }
+
+  function createComputedGetter(key) {
+    // 取计算属性的值
+    return function computedGetter() {
+      // 这个watcher中包含了getter
+      var watcher = this._computedWatchers[key]; // 根据dirty属性来判断是否需要重新求值
+      // 脏就是意味着需要调用用户的getter
+      // 不脏就不用调用用户的getter
+
+      if (watcher.dirty) {
+        watcher.evaluate();
+      }
+
+      return watcher.value;
+    };
   }
 
   /*

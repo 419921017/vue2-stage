@@ -17,6 +17,9 @@ class Watcher {
     this.exprOrFn = exprOrFn;
     // 是不是用户watcher
     this.user = !!options.user;
+    // 使用lazy区分是否是计算属性
+    this.lazy = !!options.lazy;
+    this.dirty = !!options.lazy;
     this.cb = cb;
     this.options = options;
     this.id = id++;
@@ -38,7 +41,7 @@ class Watcher {
     this.deps = [];
     this.depsId = new Set();
     // 默认的初始化操作
-    this.value = this.get();
+    this.value = this.lazy ? undefined : this.get();
   }
   // 数据更新时, 重新调用getter
   get() {
@@ -46,7 +49,7 @@ class Watcher {
     // Dep.target = watcher
     pushTarget(this);
     // render()方法会去vm上取值, vm._update(vm._render())
-    const value = this.getter();
+    const value = this.getter.call(this.vm);
     // Dep.target = null, 如果Dep.target有值, 说明值在模板中使用了
     popTarget();
     return value;
@@ -74,6 +77,11 @@ class Watcher {
     console.log('this.cb', this.cb);
     this.user && this.cb.call(this.vm, newValue, oldValue);
   }
+  evaluate() {
+    // 取过值了
+    this.dirty = false;
+    this.value = this.get();
+  }
 }
 
 // 将更新功能封装成了一个watcher
@@ -82,5 +90,5 @@ class Watcher {
 // 取值时, 给每个属性都加了dep属性, 用于存储这个渲染watcher, 同一个watcher会对应多个dep
 // 每给属性可能对应多个视图(多个watcher), 一个属性对应多个watcher
 // dep.depend(), 通知dep存放watcher => Dep.target.addDep(), 通知watcher存放dep
-// dep和wathcer是双向取值的
+// dep和watcher是双向取值的
 export default Watcher;

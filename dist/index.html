@@ -21,6 +21,7 @@
       beautiful {{name}} world
       <div>{{obj.arr}}</div>
       <div>{{age.n}}</div>
+      <div>{{fullName}}</div>
     </div>
     <script>
       let vm = new Vue({
@@ -35,6 +36,11 @@
               n: 100,
             },
           };
+        },
+        computed: {
+          fullName() {
+            return this.name + '123';
+          },
         },
         watch: {
           // name(newVal, oldVal) {
@@ -61,9 +67,6 @@
       vm.name = 456;
       vm.name = 789;
       vm.age.n = 111;
-      setTimeout(() => {
-        vm.obj.arr.push(456);
-      }, 1000);
     </script>
   </body>
 </html>
