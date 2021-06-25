@@ -9,10 +9,10 @@
 const defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g;
 
 function genProps(attrs) {
-  let str = "";
+  let str = '';
   for (let i = 0; i < attrs.length; i++) {
     let attr = attrs[i];
-    if (attr.name === "style") {
+    if (attr.name === 'style') {
       let styleObj = {};
       attr.value.replace(/([^;:]+)\:([^;:]+)/g, function () {
         styleObj[arguments[1].trim()] = arguments[2].trim();
@@ -28,7 +28,7 @@ function genChildren(el) {
   let children = el.children;
 
   if (children) {
-    return children.map((child) => gen(child)).join(",");
+    return children.map((child) => gen(child)).join(',');
   }
   return false;
 }
@@ -56,7 +56,7 @@ function gen(el) {
       if (lastIndex < text.length) {
         tokens.push(JSON.stringify(text.slice(lastIndex)));
       }
-      return `_v(${tokens.join("+")})`;
+      return `_v(${tokens.join('+')})`;
     }
   }
 }
@@ -65,8 +65,8 @@ export function generate(el) {
   let children = genChildren(el);
 
   let code = `_c('${el.tag}',${
-    el.attrs && el.attrs.length > 0 ? genProps(el.attrs) : "undefined"
-  }${children ? `,${children}` : ""})`;
+    el.attrs && el.attrs.length > 0 ? genProps(el.attrs) : 'undefined'
+  }${children ? `,${children}` : ''})`;
 
   return code;
 }

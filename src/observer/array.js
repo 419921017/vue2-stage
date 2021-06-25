@@ -10,13 +10,13 @@ const oldArrayPrototype = Array.prototype;
 const arrayMethods = Object.create(oldArrayPrototype);
 
 const methods = [
-  "push",
-  "pop",
-  "shift",
-  "unshift",
-  "splice",
-  "reverse",
-  "sort",
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'splice',
+  'reverse',
+  'sort',
 ];
 
 methods.forEach((method) => {
@@ -25,11 +25,11 @@ methods.forEach((method) => {
     let inserted;
     let ob = this.__ob__;
     switch (method) {
-      case "push":
-      case "unshfit":
+      case 'push':
+      case 'unshfit':
         inserted = args; // 就是新增的内容
         break;
-      case "splice":
+      case 'splice':
         inserted = args.slice(2);
         break;
       default:
@@ -38,6 +38,8 @@ methods.forEach((method) => {
     if (inserted) {
       ob.observeArray(inserted);
     }
+    // 数组的observe.dep
+    ob.dep.notify();
   };
 });
 

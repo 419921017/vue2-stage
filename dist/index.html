@@ -19,17 +19,27 @@
     <div id="app" style="color: red; background-color: burlywood">
       <span>hello</span>
       beautiful {{name}} world
+      <div>{{obj.arr}}</div>
     </div>
     <script>
       let vm = new Vue({
-        el: "#app",
+        el: '#app',
         data() {
-          return { name: "zf" };
+          return {
+            name: 'ly',
+            obj: {
+              arr: [123],
+            },
+          };
         },
       });
       vm.name = 123;
       vm.name = 456;
       vm.name = 789;
+
+      setTimeout(() => {
+        vm.obj.arr.push(456);
+      }, 1000);
     </script>
   </body>
 </html>
