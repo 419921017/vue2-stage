@@ -1,6 +1,6 @@
-import { isString } from '../utils';
-import { popTarget, pushTarget } from './dep';
-import { queueWatcher } from './scheduler';
+import { isString } from "../utils";
+import { popTarget, pushTarget } from "./dep";
+import { queueWatcher } from "./scheduler";
 
 /*
  * @Descripttion: your project
@@ -8,7 +8,7 @@ import { queueWatcher } from './scheduler';
  * @Author: power_840
  * @Date: 2021-06-24 20:25:22
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 21:38:12
+ * @LastEditTime: 2021-06-25 19:42:54
  */
 let id = 0;
 class Watcher {
@@ -29,7 +29,7 @@ class Watcher {
       this.getter = function () {
         // 当数据取值时, 会进行依赖收集
         let obj = vm;
-        return exprOrFn.split('.').reduce((a, b) => a[b], obj);
+        return exprOrFn.split(".").reduce((a, b) => a[b], obj);
         // for (const item of exprOrFn.split('.')) {
         //   obj = obj[item];
         // }
@@ -67,20 +67,30 @@ class Watcher {
   }
   update() {
     // this.get();
-    queueWatcher(this);
+    if (this.lazy) {
+      this.dirty = true;
+    } else {
+      queueWatcher(this);
+    }
   }
   run() {
     const newValue = this.get();
     let oldValue = this.value;
     // 替换旧值
     this.value = newValue;
-    console.log('this.cb', this.cb);
+    console.log("this.cb", this.cb);
     this.user && this.cb.call(this.vm, newValue, oldValue);
   }
   evaluate() {
     // 取过值了
     this.dirty = false;
     this.value = this.get();
+  }
+  depend() {
+    let i = this.deps.length;
+    while (i--) {
+      this.deps[i].depend();
+    }
   }
 }
 

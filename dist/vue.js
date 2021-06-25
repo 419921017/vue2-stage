@@ -497,7 +497,7 @@
    * @Author: power_840
    * @Date: 2021-06-24 20:35:31
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-24 21:20:18
+   * @LastEditTime: 2021-06-25 19:22:48
    */
   var id$1 = 0; // 每个属性都分配一个dep, dep可以存放watcher, 一个dep对应多个watcher, 一个watcher对应多个dep
 
@@ -533,12 +533,16 @@
     return Dep;
   }();
 
-  Dep.target = null;
+  Dep.target = null; // 使用栈的方式存放多个watcher
+
+  var stack = [];
   function pushTarget(watcher) {
+    stack.push(watcher);
     Dep.target = watcher;
   }
   function popTarget(watcher) {
-    Dep.target = null;
+    stack.pop();
+    Dep.target = stack[stack.length - 1];
   }
 
   /*
@@ -582,7 +586,7 @@
    * @Author: power_840
    * @Date: 2021-06-24 20:25:22
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-24 21:38:12
+   * @LastEditTime: 2021-06-25 19:42:54
    */
 
   var id = 0;
@@ -607,7 +611,7 @@
         this.getter = function () {
           // 当数据取值时, 会进行依赖收集
           var obj = vm;
-          return exprOrFn.split('.').reduce(function (a, b) {
+          return exprOrFn.split(".").reduce(function (a, b) {
             return a[b];
           }, obj); // for (const item of exprOrFn.split('.')) {
           //   obj = obj[item];
@@ -654,7 +658,11 @@
       key: "update",
       value: function update() {
         // this.get();
-        queueWatcher(this);
+        if (this.lazy) {
+          this.dirty = true;
+        } else {
+          queueWatcher(this);
+        }
       }
     }, {
       key: "run",
@@ -663,7 +671,7 @@
         var oldValue = this.value; // 替换旧值
 
         this.value = newValue;
-        console.log('this.cb', this.cb);
+        console.log("this.cb", this.cb);
         this.user && this.cb.call(this.vm, newValue, oldValue);
       }
     }, {
@@ -672,6 +680,15 @@
         // 取过值了
         this.dirty = false;
         this.value = this.get();
+      }
+    }, {
+      key: "depend",
+      value: function depend() {
+        var i = this.deps.length;
+
+        while (i--) {
+          this.deps[i].depend();
+        }
       }
     }]);
 
@@ -884,7 +901,7 @@
    * @Author: power_840
    * @Date: 2021-06-17 21:29:52
    * @LastEditors: power_840
-   * @LastEditTime: 2021-06-21 20:10:58
+   * @LastEditTime: 2021-06-25 19:25:56
    */
 
   function stateMixin(Vue) {
@@ -933,7 +950,7 @@
     data = vm._data = isFunction(data) ? data.call(vm) : data;
 
     for (var key in data) {
-      proxy(vm, '_data', key);
+      proxy(vm, "_data", key);
     }
 
     observe(data);
@@ -973,7 +990,7 @@
     Object.keys(computed).forEach(function (key) {
       var userDef = computed[key];
       var getter = isFunction(userDef) ? userDef : userDef.get;
-      console.log('getter', getter); // 每个计算属性, 本质上是一个watcher
+      console.log("getter", getter); // 每个计算属性, 本质上是一个watcher
 
       watchers[key] = new Watcher(vm, getter, function () {}, {
         lazy: true
@@ -1006,6 +1023,13 @@
 
       if (watcher.dirty) {
         watcher.evaluate();
+      } // 如果渲染watcher存在, 计算属性也需要收集渲染watcher
+
+
+      if (Dep.target) {
+        // watcher属性对应多个dep
+        // 计算属性watcher对应内部有多个dep(computed所依赖的属性)
+        watcher.depend();
       }
 
       return watcher.value;

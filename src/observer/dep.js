@@ -4,7 +4,7 @@
  * @Author: power_840
  * @Date: 2021-06-24 20:35:31
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 21:20:18
+ * @LastEditTime: 2021-06-25 19:22:48
  */
 
 let id = 0;
@@ -29,11 +29,16 @@ class Dep {
 
 Dep.target = null;
 
+// 使用栈的方式存放多个watcher
+let stack = [];
+
 export function pushTarget(watcher) {
+  stack.push(watcher);
   Dep.target = watcher;
 }
 export function popTarget(watcher) {
-  Dep.target = null;
+  stack.pop();
+  Dep.target = stack[stack.length - 1];
 }
 
 export default Dep;

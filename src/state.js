@@ -1,6 +1,7 @@
-import { observe } from './observer';
-import Watcher from './observer/watcher';
-import { isArray, isFunction } from './utils';
+import { observe } from "./observer";
+import Dep from "./observer/dep";
+import Watcher from "./observer/watcher";
+import { isArray, isFunction } from "./utils";
 
 /*
  * @Descripttion: your project
@@ -8,7 +9,7 @@ import { isArray, isFunction } from './utils';
  * @Author: power_840
  * @Date: 2021-06-17 21:29:52
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-21 20:10:58
+ * @LastEditTime: 2021-06-25 19:25:56
  */
 export function stateMixin(Vue) {
   Vue.prototype.$watch = function (key, handler, options = {}) {
@@ -56,7 +57,7 @@ function initData(vm) {
   let data = vm.$options.data;
   data = vm._data = isFunction(data) ? data.call(vm) : data;
   for (const key in data) {
-    proxy(vm, '_data', key);
+    proxy(vm, "_data", key);
   }
   observe(data);
 }
@@ -84,7 +85,7 @@ function initComputed(vm, computed) {
   Object.keys(computed).forEach((key) => {
     const userDef = computed[key];
     let getter = isFunction(userDef) ? userDef : userDef.get;
-    console.log('getter', getter);
+    console.log("getter", getter);
     // 每个计算属性, 本质上是一个watcher
     watchers[key] = new Watcher(vm, getter, () => {}, {
       lazy: true,
@@ -115,6 +116,12 @@ function createComputedGetter(key) {
     // 不脏就不用调用用户的getter
     if (watcher.dirty) {
       watcher.evaluate();
+    }
+    // 如果渲染watcher存在, 计算属性也需要收集渲染watcher
+    if (Dep.target) {
+      // watcher属性对应多个dep
+      // 计算属性watcher对应内部有多个dep(computed所依赖的属性)
+      watcher.depend();
     }
     return watcher.value;
   };
