@@ -7,6 +7,8 @@
  * @LastEditTime: 2021-06-24 22:00:49
  */
 export const isFunction = (fn) => typeof fn === 'function';
+export const isString = (str) => typeof str === 'string';
+export const isNumber = (num) => typeof num === 'number';
 export const isObject = (obj) => typeof obj === 'object' && obj !== null;
 export const isArray = (arr) => Array.isArray(arr);
 

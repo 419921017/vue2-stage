@@ -7,13 +7,12 @@
  * @LastEditTime: 2021-06-24 21:49:08
  */
 
-import { patch } from "./vdom/patch";
-import Watcher from "./observer/watcher";
-import { nextTick } from "./utils";
+import { patch } from './vdom/patch';
+import Watcher from './observer/watcher';
+import { nextTick } from './utils';
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
-    console.log("_update");
     const vm = this;
     vm.$el = patch(vm.$el, vnode);
   };
@@ -34,7 +33,7 @@ export function mountComponent(vm, el) {
     vm,
     updateComponent,
     () => {
-      console.log("udpate");
+      console.log('udpate');
     },
     true
   );

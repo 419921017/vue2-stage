@@ -62,7 +62,6 @@ function defineReactive(data, key, value) {
   // value有可能是对象
   // 如果value是对象, 需要进行递归处理
   let childOb = observe(value);
-  console.log('childOb', childOb);
   // 每个属性都对应一个dep
   let dep = new Dep();
   Object.defineProperty(data, key, {

@@ -1,5 +1,6 @@
-import { popTarget, pushTarget } from "./dep";
-import { queueWatcher } from "./scheduler";
+import { isString } from '../utils';
+import { popTarget, pushTarget } from './dep';
+import { queueWatcher } from './scheduler';
 
 /*
  * @Descripttion: your project
@@ -14,15 +15,30 @@ class Watcher {
   constructor(vm, exprOrFn, cb, options) {
     this.vm = vm;
     this.exprOrFn = exprOrFn;
+    // 是不是用户watcher
+    this.user = !!options.user;
     this.cb = cb;
     this.options = options;
     this.id = id++;
     // exprOrFn一调用就会取值
-    this.getter = exprOrFn;
+    if (isString(exprOrFn)) {
+      // 如果表达式是字符串, 转换成函数
+      this.getter = function () {
+        // 当数据取值时, 会进行依赖收集
+        let obj = vm;
+        return exprOrFn.split('.').reduce((a, b) => a[b], obj);
+        // for (const item of exprOrFn.split('.')) {
+        //   obj = obj[item];
+        // }
+        // return obj;
+      };
+    } else {
+      this.getter = exprOrFn;
+    }
     this.deps = [];
     this.depsId = new Set();
     // 默认的初始化操作
-    this.get();
+    this.value = this.get();
   }
   // 数据更新时, 重新调用getter
   get() {
@@ -30,9 +46,10 @@ class Watcher {
     // Dep.target = watcher
     pushTarget(this);
     // render()方法会去vm上取值, vm._update(vm._render())
-    this.getter();
+    const value = this.getter();
     // Dep.target = null, 如果Dep.target有值, 说明值在模板中使用了
     popTarget();
+    return value;
   }
   addDep(dep) {
     let id = dep.id;
@@ -50,7 +67,12 @@ class Watcher {
     queueWatcher(this);
   }
   run() {
-    this.get();
+    const newValue = this.get();
+    let oldValue = this.value;
+    // 替换旧值
+    this.value = newValue;
+    console.log('this.cb', this.cb);
+    this.user && this.cb.call(this.vm, newValue, oldValue);
   }
 }
 

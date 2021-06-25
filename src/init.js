@@ -7,9 +7,9 @@
  * @LastEditTime: 2021-06-24 19:44:19
  */
 
-import { compileToFunction } from "./compiler";
-import { mountComponent } from "./lifecycle";
-import { initState } from "./state";
+import { compileToFunction } from './compiler';
+import { mountComponent } from './lifecycle';
+import { initState } from './state';
 
 /**
  *
@@ -19,7 +19,6 @@ import { initState } from "./state";
  */
 export function initMixin(Vue) {
   Vue.prototype._init = function (options) {
-    // console.log("options", options);
     const vm = this;
     vm.$options = options;
     initState(vm);
@@ -37,13 +36,11 @@ export function initMixin(Vue) {
     if (!options.render) {
       let template = options.template;
       if (!template && el) {
-        console.log("el", el);
         template = el.outerHTML;
         let render = compileToFunction(template);
         options.render = render;
       }
     }
-    console.log(options.render);
     // 组件的挂载流程
     mountComponent(vm, el);
   };

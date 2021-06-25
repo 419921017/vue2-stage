@@ -20,6 +20,7 @@
       <span>hello</span>
       beautiful {{name}} world
       <div>{{obj.arr}}</div>
+      <div>{{age.n}}</div>
     </div>
     <script>
       let vm = new Vue({
@@ -30,13 +31,36 @@
             obj: {
               arr: [123],
             },
+            age: {
+              n: 100,
+            },
           };
+        },
+        watch: {
+          // name(newVal, oldVal) {
+          //   console.log('newVal', newVal);
+          //   console.log('oldVal', oldVal);
+          // },
+          name: [
+            function (newVal, oldVal) {
+              console.log('newVal', newVal);
+              console.log('oldVal', oldVal);
+            },
+            function (a, b) {
+              console.log('a', a);
+              console.log('b', b);
+            },
+          ],
+          'age.n'(newVal, oldVal) {
+            console.log('newVal', newVal);
+            console.log('oldVal', oldVal);
+          },
         },
       });
       vm.name = 123;
       vm.name = 456;
       vm.name = 789;
-
+      vm.age.n = 111;
       setTimeout(() => {
         vm.obj.arr.push(456);
       }, 1000);

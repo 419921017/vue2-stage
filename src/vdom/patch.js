@@ -8,7 +8,7 @@
  */
 export function patch(oldVnode, vnode) {
   if (oldVnode.nodeType == 1) {
-    console.log("真实节点");
+    // console.log("真实节点");
     const parentElm = oldVnode.parentNode;
 
     let elm = createEle(vnode);
@@ -20,7 +20,7 @@ export function patch(oldVnode, vnode) {
 
 export function createEle(vnode) {
   let { tag, data, children, text, vm } = vnode;
-  if (typeof tag === "string") {
+  if (typeof tag === 'string') {
     vnode.el = document.createElement(tag);
     updateProperties(vnode);
     children.forEach((child) => {
@@ -36,7 +36,7 @@ function updateProperties(vnode) {
   let newProps = vnode.data || {};
   let el = vnode.el;
   for (let key in newProps) {
-    if (key == "style") {
+    if (key == 'style') {
       for (let styleName in newProps.style) {
         el.style[styleName] = newProps.style[styleName];
       }

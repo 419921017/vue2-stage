@@ -36,7 +36,6 @@ export function parserHTML(html) {
     };
   }
   function start(tag, attrs) {
-    // console.log("start", tag, attrs);
     let parent = stack[stack.length - 1];
     let element = createASTElement(tag, attrs, parent);
     if (root == null) {
@@ -52,17 +51,15 @@ export function parserHTML(html) {
   }
 
   function end(tag) {
-    // console.log("end", tag);
     let endTag = stack.pop();
     if (endTag.tag != tag) {
-      console.log("标签出错");
+      console.log('标签出错');
     }
   }
 
   function text(chars) {
-    // console.log("text", chars);
     let parent = stack[stack.length - 1];
-    chars.replace(/\s/, "");
+    chars.replace(/\s/, '');
     if (chars) {
       parent.children.push({
         type: 2,
@@ -82,7 +79,6 @@ export function parserHTML(html) {
         attrs: [],
       };
       advance(start[0].length);
-      // console.log(match, html);
       let end;
       let attr;
       // 不能是开始的结束标签
@@ -97,7 +93,6 @@ export function parserHTML(html) {
         });
         advance(attr[0].length);
       }
-      // console.log("end", end);
       if (end) {
         advance(end[0].length);
       }
@@ -109,7 +104,7 @@ export function parserHTML(html) {
   }
 
   while (html) {
-    let index = html.indexOf("<");
+    let index = html.indexOf('<');
 
     if (index === 0) {
       // 解析开始标签
@@ -137,6 +132,5 @@ export function parserHTML(html) {
       }
     }
   }
-  console.log("root", root);
   return root;
 }

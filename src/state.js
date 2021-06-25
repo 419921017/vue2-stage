@@ -1,5 +1,6 @@
-import { observe } from "./observer";
-import { isFunction } from "./utils";
+import { observe } from './observer';
+import Watcher from './observer/watcher';
+import { isArray, isFunction } from './utils';
 
 /*
  * @Descripttion: your project
@@ -9,8 +10,17 @@ import { isFunction } from "./utils";
  * @LastEditors: power_840
  * @LastEditTime: 2021-06-21 20:10:58
  */
+export function stateMixin(Vue) {
+  Vue.prototype.$watch = function (key, handler, options = {}) {
+    options.user = true;
+    let watcher = new Watcher(this, key, handler, options);
+    if (options.immediate) {
+      handler(watcher.value);
+    }
+  };
+}
+
 export function initState(vm) {
-  console.log("initState", vm.$options);
   const opts = vm.$options;
   // if (opts.props) {
   // }
@@ -25,8 +35,9 @@ export function initState(vm) {
   // if (opts.computed) {
   // }
 
-  // if (opts.watch) {
-  // }
+  if (opts.watch) {
+    initWatch(vm, opts.watch);
+  }
 }
 
 function proxy(vm, source, key) {
@@ -44,8 +55,24 @@ function initData(vm) {
   let data = vm.$options.data;
   data = vm._data = isFunction(data) ? data.call(vm) : data;
   for (const key in data) {
-    proxy(vm, "_data", key);
+    proxy(vm, '_data', key);
   }
-  // console.log("initData", data);
   observe(data);
+}
+
+function initWatch(vm, watch) {
+  Object.keys((key) => {
+    const handler = watch[key];
+    if (isArray(handler)) {
+      for (const fn of handler) {
+        createWatcher(vm, key, fn);
+      }
+    } else {
+      createWatcher(vm, key, handler);
+    }
+  });
+}
+
+function createWatcher(vm, key, handler) {
+  return vm.$watch(key, handler);
 }
