@@ -4,7 +4,7 @@
  * @Author: power_840
  * @Date: 2021-06-17 21:13:00
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 22:02:19
+ * @LastEditTime: 2021-06-28 22:12:54
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -24,11 +24,21 @@
       <div>{{fullName}}</div>
     </div>
     <script>
+      Vue.mixin({
+        beforeCreate() {
+          console.log("beforeCreate1");
+        },
+      });
+      Vue.mixin({
+        beforeCreate() {
+          console.log("beforeCreate2");
+        },
+      });
       let vm = new Vue({
-        el: '#app',
+        el: "#app",
         data() {
           return {
-            name: 'ly',
+            name: "ly",
             obj: {
               arr: [123],
             },
@@ -39,7 +49,7 @@
         },
         computed: {
           fullName() {
-            return this.name + '123';
+            return this.name + "123";
           },
         },
         watch: {
@@ -49,18 +59,21 @@
           // },
           name: [
             function (newVal, oldVal) {
-              console.log('newVal', newVal);
-              console.log('oldVal', oldVal);
+              console.log("newVal", newVal);
+              console.log("oldVal", oldVal);
             },
             function (a, b) {
-              console.log('a', a);
-              console.log('b', b);
+              console.log("a", a);
+              console.log("b", b);
             },
           ],
-          'age.n'(newVal, oldVal) {
-            console.log('newVal', newVal);
-            console.log('oldVal', oldVal);
+          "age.n"(newVal, oldVal) {
+            console.log("newVal", newVal);
+            console.log("oldVal", oldVal);
           },
+        },
+        beforeCreate() {
+          console.log("beforeCreate3");
         },
       });
       vm.name = 123;

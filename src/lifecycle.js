@@ -4,12 +4,12 @@
  * @Author: power_840
  * @Date: 2021-06-23 21:18:30
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 21:49:08
+ * @LastEditTime: 2021-06-28 22:08:56
  */
 
-import { patch } from './vdom/patch';
-import Watcher from './observer/watcher';
-import { nextTick } from './utils';
+import { patch } from "./vdom/patch";
+import Watcher from "./observer/watcher";
+import { nextTick } from "./utils";
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
@@ -26,6 +26,7 @@ export function mountComponent(vm, el) {
     vm._update(vm._render());
     // 用虚拟dom生成真实dom
   };
+  callHook(vm, "beforeMount");
   // updateComponent();
   // true表示这是一个渲染watcher
   // 每个组件都对一个渲染watcher
@@ -33,8 +34,12 @@ export function mountComponent(vm, el) {
     vm,
     updateComponent,
     () => {
-      console.log('udpate');
+      console.log("udpate");
     },
     true
   );
+}
+
+export function callHook(vm, hook) {
+  vm.$options[hook] && vm.$options[hook].forEach((fn) => fn.call(vm));
 }

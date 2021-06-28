@@ -4,12 +4,12 @@
  * @Author: power_840
  * @Date: 2021-06-17 21:35:20
  * @LastEditors: power_840
- * @LastEditTime: 2021-06-24 22:00:49
+ * @LastEditTime: 2021-06-28 22:12:17
  */
-export const isFunction = (fn) => typeof fn === 'function';
-export const isString = (str) => typeof str === 'string';
-export const isNumber = (num) => typeof num === 'number';
-export const isObject = (obj) => typeof obj === 'object' && obj !== null;
+export const isFunction = (fn) => typeof fn === "function";
+export const isString = (str) => typeof str === "string";
+export const isNumber = (num) => typeof num === "number";
+export const isObject = (obj) => typeof obj === "object" && obj !== null;
 export const isArray = (arr) => Array.isArray(arr);
 
 const callbacks = [];
@@ -33,13 +33,13 @@ function timer(flushCallbacks) {
       Promise.resolve().then(flushCallbacks);
     };
   } else if (MutationObserver) {
-    let textNode = document.createTextNode('1');
+    let textNode = document.createTextNode("1");
     let observe = new MutationObserver(flushCallbacks);
     observe.observe(textNode, {
       characterData: true,
     });
     timerFn = () => {
-      textNode.textContent = '3';
+      textNode.textContent = "3";
     };
   } else if (setImmediate) {
     timerFn = () => {
@@ -60,4 +60,58 @@ export function nextTick(cb) {
     timer(flushCallbacks);
     pending = true;
   }
+}
+
+let lifeCycleHooks = [
+  "beforeCreate",
+  "created",
+  "beforeMount",
+  "mounted",
+  "beforeUpdate",
+  "updated",
+  "beforeDesotry",
+  "destoryed",
+];
+
+let strats = {};
+
+function mergeHook(parentVal, childVal) {
+  if (childVal) {
+    if (parentVal) {
+      return parentVal.concat(childVal);
+    } else {
+      return [childVal];
+    }
+  } else {
+    return parentVal;
+  }
+}
+
+lifeCycleHooks.forEach((hook) => {
+  strats[hook] = mergeHook;
+});
+
+export function mergeOptions(parent, child) {
+  const options = {};
+  for (let key in parent) {
+    mergeFieId(key);
+  }
+  for (let key in child) {
+    if (key in parent) {
+      continue;
+    }
+    mergeFieId(key);
+  }
+  function mergeFieId(key) {
+    let parentVal = parent[key];
+    let childVal = child[key];
+    if (strats[key]) {
+      options[key] = strats[key](parentVal, childVal);
+    } else if (isObject(parentVal) && isObject(childVal)) {
+      options[key] = { ...parentVal, ...childVal };
+    } else {
+      options[key] = childVal;
+    }
+  }
+  return options;
 }
