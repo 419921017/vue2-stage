@@ -91,6 +91,20 @@ lifeCycleHooks.forEach((hook) => {
   structs[hook] = mergeHook;
 });
 
+structs.components = function (parentVal, childVal) {
+  // 创建了一个对象 Object._proto_
+  let options = Object.create(parentVal);
+  if (childVal) {
+    for (const key in childVal) {
+      if (Object.hasOwnProperty.call(childVal, key)) {
+        // 先查找自身, 如果没有通过原型链查找
+        options[key] = childVal[key];
+      }
+    }
+  }
+  return options;
+};
+
 export function mergeOptions(parent, child) {
   const options = {};
   for (let key in parent) {
@@ -110,8 +124,13 @@ export function mergeOptions(parent, child) {
     } else if (isObject(parentVal) && isObject(childVal)) {
       options[key] = { ...parentVal, ...childVal };
     } else {
-      options[key] = childVal;
+      options[key] = childVal || parentVal;
     }
   }
   return options;
+}
+
+export function isReservedTag(tagName) {
+  let reservedTag = 'a, div, span, p, img, button, ul, li';
+  return reservedTag.includes(tagName);
 }

@@ -261,6 +261,23 @@
   lifeCycleHooks.forEach(function (hook) {
     structs[hook] = mergeHook;
   });
+
+  structs.components = function (parentVal, childVal) {
+    // 创建了一个对象 Object._proto_
+    var options = Object.create(parentVal);
+
+    if (childVal) {
+      for (var key in childVal) {
+        if (Object.hasOwnProperty.call(childVal, key)) {
+          // 先查找自身, 如果没有通过原型链查找
+          options[key] = childVal[key];
+        }
+      }
+    }
+
+    return options;
+  };
+
   function mergeOptions(parent, child) {
     var options = {};
 
@@ -285,11 +302,15 @@
       } else if (isObject(parentVal) && isObject(childVal)) {
         options[key] = _objectSpread2(_objectSpread2({}, parentVal), childVal);
       } else {
-        options[key] = childVal;
+        options[key] = childVal || parentVal;
       }
     }
 
     return options;
+  }
+  function isReservedTag(tagName) {
+    var reservedTag = 'a, div, span, p, img, button, ul, li';
+    return reservedTag.includes(tagName);
   }
 
   /*
@@ -308,6 +329,31 @@
 
     Vue.mixin = function (options) {
       this.options = mergeOptions(this.options, options);
+    }; // 后续无论创建多少个子类, 都可以通过_base找到Vue
+
+
+    Vue.options._base = Vue;
+    Vue.options.components = {};
+
+    Vue.component = function (id, definition) {
+      // 保证组件的隔离, 每个组件都要创建一个新类, 继承父类
+      definition = this.options._base.extend(definition);
+      this.options.components[id] = definition;
+    }; // 产生一个继承Vue的类
+
+
+    Vue.extend = function (opts) {
+      var Super = this;
+
+      var Sub = function VueComponent(options) {
+        this._init(options);
+      };
+
+      Sub.prototype = Object.create(Super.prototype);
+      Sub.prototype.constructor = Sub; // 只和Vue的options合并
+
+      Sub.options = mergeOptions(Super.options, opts);
+      return Sub;
     };
   }
 
@@ -567,6 +613,12 @@
    * @LastEditTime: 2021-06-24 20:22:35
    */
   function patch(oldVnode, vnode) {
+    // 没有el元素, 说明是组件
+    if (!oldVnode) {
+      // 直接将虚拟节点转换成真实节点
+      return createEle(vnode);
+    }
+
     if (oldVnode.nodeType == 1) {
       // console.log("真实节点");
       var parentElm = oldVnode.parentNode;
@@ -576,6 +628,14 @@
       return elm;
     }
   }
+  /**
+   * 创建真实节点
+   *
+   * @export
+   * @param {*} vnode
+   * @return {*}
+   */
+
   function createEle(vnode) {
     var tag = vnode.tag;
         vnode.data;
@@ -584,6 +644,11 @@
         vnode.vm;
 
     if (typeof tag === 'string') {
+      // 如果是组件
+      if (createComponent$1(vnode)) {
+        return vnode.componentInstance.$el;
+      }
+
       vnode.el = document.createElement(tag);
       updateProperties(vnode);
       children.forEach(function (child) {
@@ -608,6 +673,20 @@
       } else {
         el.setAttribute(key, newProps[key]);
       }
+    }
+  }
+
+  function createComponent$1(vnode) {
+    var i = vnode.data; // 判断加赋值
+
+    if ((i = i.hook) && (i = i.init)) {
+      // 调用init方法
+      i(vnode);
+    } // 说明子组件已经new完毕了, 并且组件对应的真实DOM已经挂载到了componentInstance.$el上
+
+
+    if (vnode.componentInstance) {
+      return true;
     }
   }
 
@@ -843,13 +922,14 @@
 
     };
 
-    callHook(vm, "beforeMount"); // updateComponent();
+    callHook(vm, 'beforeMount'); // updateComponent();
     // true表示这是一个渲染watcher
     // 每个组件都对一个渲染watcher
 
     new Watcher(vm, updateComponent, function () {
-      console.log("udpate");
+      console.log('update');
     }, true);
+    callHook(vm, 'mounted');
   }
   function callHook(vm, hook) {
     vm.$options[hook] && vm.$options[hook].forEach(function (fn) {
@@ -1255,9 +1335,10 @@
 
         if (!template && el) {
           template = el.outerHTML;
-          var render = compileToFunction(template);
-          options.render = render;
         }
+
+        var render = compileToFunction(template);
+        options.render = render;
       } // 组件的挂载流程
 
 
@@ -1273,6 +1354,17 @@
    * @LastEditors: power_840
    * @LastEditTime: 2021-06-23 21:35:54
    */
+  /**
+   *
+   *
+   * @export
+   * @param {*} vm
+   * @param {*} tag 标签名, 组件名
+   * @param {*} [data={}]
+   * @param {*} children
+   * @return {*}
+   */
+
   function createElement(vm, tag) {
     var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
@@ -1280,20 +1372,64 @@
       children[_key - 3] = arguments[_key];
     }
 
-    return vnode(vm, tag, data, data.key, children, undefined);
+    if (isReservedTag(tag)) {
+      return vnode(vm, tag, data, data.key, children, undefined);
+    } else {
+      var Ctor = vm.$options.components[tag];
+      return createComponent(vm, tag, data, data.key, children, Ctor);
+    }
   }
   function createTextElement(vm, text) {
     return vnode(vm, undefined, undefined, undefined, undefined, text);
   }
+  /**
+   * 创建组件的组件的虚拟节点
+   *
+   * @export
+   * @param {*} vm
+   * @param {*} tag
+   * @param {*} data
+   * @param {*} key
+   * @param {*} children
+   * @param {*} Ctor
+   *
+   * 1. 给组件创建一个构造函数, 基于Vue
+   * 2. 开始生成虚拟节点, 对组件进行特殊处理, data.hook = { init() {} }
+   * 3. 生成dom节点, 如果当前虚拟节点有hook.init属性, 说明是组件
+   * 4. 对自己进行new 组件().$mount() => vm.$el, 将组件对应的真实节点挂载到实例的$el上
+   * 5. 将组件的$el插入到父容器中(父组件)
+   */
 
-  function vnode(vm, tag, data, key, children, text) {
+  function createComponent(vm, tag, data, key, children, Ctor) {
+    if (isObject(Ctor)) {
+      Ctor = vm.$options._base.extend(Ctor);
+    } // 渲染组件时需要调用该初始化方法
+
+
+    data.hook = {
+      init: function init(vnode) {
+        var vm = vnode.componentInstance = new Ctor({
+          _isComponent: true
+        }); // 组件挂载完成后, vm.$el => 真实节点, vm.$el对应的是组件的真实dom
+
+        vm.$mount();
+      }
+    };
+    return vnode(vm, "vue-component-".concat(tag), data, key, undefined, undefined, {
+      Ctor: Ctor,
+      children: children
+    });
+  }
+
+  function vnode(vm, tag, data, key, children, text, componentOptions) {
     return {
       vm: vm,
       tag: tag,
       data: data,
       key: key,
       children: children,
-      text: text
+      text: text,
+      componentOptions: componentOptions
     };
   }
 

@@ -1,4 +1,4 @@
-import { mergeOptions } from "../utils";
+import { mergeOptions } from '../utils';
 
 /*
  * @Descripttion: your project
@@ -14,5 +14,27 @@ export function initGlobalApi(Vue) {
   Vue.options = {};
   Vue.mixin = function (options) {
     this.options = mergeOptions(this.options, options);
+  };
+  // 后续无论创建多少个子类, 都可以通过_base找到Vue
+  Vue.options._base = Vue;
+  Vue.options.components = {};
+  Vue.component = function (id, definition) {
+    // 保证组件的隔离, 每个组件都要创建一个新类, 继承父类
+    definition = this.options._base.extend(definition);
+    this.options.components[id] = definition;
+  };
+
+  // 产生一个继承Vue的类
+  Vue.extend = function (opts) {
+    const Super = this;
+    const Sub = function VueComponent(options) {
+      this._init(options);
+    };
+    Sub.prototype = Object.create(Super.prototype);
+    Sub.prototype.constructor = Sub;
+    // 只和Vue的options合并
+    Sub.options = mergeOptions(Super.options, opts);
+
+    return Sub;
   };
 }

@@ -40,9 +40,9 @@ export function initMixin(Vue) {
       let template = options.template;
       if (!template && el) {
         template = el.outerHTML;
-        let render = compileToFunction(template);
-        options.render = render;
       }
+      let render = compileToFunction(template);
+      options.render = render;
     }
 
     // 组件的挂载流程

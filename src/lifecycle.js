@@ -7,9 +7,9 @@
  * @LastEditTime: 2021-06-28 22:08:56
  */
 
-import { patch } from "./vdom/patch";
-import Watcher from "./observer/watcher";
-import { nextTick } from "./utils";
+import { patch } from './vdom/patch';
+import Watcher from './observer/watcher';
+import { nextTick } from './utils';
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
@@ -26,7 +26,7 @@ export function mountComponent(vm, el) {
     vm._update(vm._render());
     // 用虚拟dom生成真实dom
   };
-  callHook(vm, "beforeMount");
+  callHook(vm, 'beforeMount');
   // updateComponent();
   // true表示这是一个渲染watcher
   // 每个组件都对一个渲染watcher
@@ -34,10 +34,11 @@ export function mountComponent(vm, el) {
     vm,
     updateComponent,
     () => {
-      console.log("udpate");
+      console.log('update');
     },
     true
   );
+  callHook(vm, 'mounted');
 }
 
 export function callHook(vm, hook) {
