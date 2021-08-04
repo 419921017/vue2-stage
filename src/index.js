@@ -1,8 +1,8 @@
-import { initGlobalApi } from "./global-api";
-import { initMixin } from "./init";
-import { lifecycleMixin } from "./lifecycle";
-import { renderMixin } from "./render";
-import { stateMixin } from "./state";
+import { initGlobalApi } from './global-api';
+import { initMixin } from './init';
+import { lifecycleMixin } from './lifecycle';
+import { renderMixin } from './render';
+import { stateMixin } from './state';
 
 /*
  * @Descripttion: your project

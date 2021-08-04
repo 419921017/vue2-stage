@@ -1,7 +1,7 @@
-import { observe } from "./observer";
-import Dep from "./observer/dep";
-import Watcher from "./observer/watcher";
-import { isArray, isFunction } from "./utils";
+import { observe } from './observer';
+import Dep from './observer/dep';
+import Watcher from './observer/watcher';
+import { isArray, isFunction } from './utils';
 
 /*
  * @Descripttion: your project
@@ -13,8 +13,10 @@ import { isArray, isFunction } from "./utils";
  */
 export function stateMixin(Vue) {
   Vue.prototype.$watch = function (key, handler, options = {}) {
+    // user标识
     options.user = true;
     let watcher = new Watcher(this, key, handler, options);
+    // 立即执行
     if (options.immediate) {
       handler(watcher.value);
     }
@@ -42,6 +44,14 @@ export function initState(vm) {
   }
 }
 
+/**
+ * 代理
+ *
+ * @param {*} vm 实例this
+ * @param {*} source 目标source
+ * @param {*} key key值
+ * @return {*}
+ */
 function proxy(vm, source, key) {
   Object.defineProperty(vm, key, {
     get() {
@@ -53,18 +63,32 @@ function proxy(vm, source, key) {
   });
 }
 
+/**
+ * 初始化data, 如果是函数就执行并绑定this到实例上, 进行响应式监听
+ *
+ * @param {*} vm
+ */
 function initData(vm) {
   let data = vm.$options.data;
   data = vm._data = isFunction(data) ? data.call(vm) : data;
+  // 通过_data进行代理
   for (const key in data) {
-    proxy(vm, "_data", key);
+    proxy(vm, '_data', key);
   }
+  // 对数据进行响应式监听
   observe(data);
 }
 
+/**
+ * 初始化watch
+ *
+ * @param {*} vm
+ * @param {*} watch
+ */
 function initWatch(vm, watch) {
   Object.keys(watch).forEach((key) => {
     const handler = watch[key];
+    // handler是否是数组
     if (isArray(handler)) {
       for (const fn of handler) {
         createWatcher(vm, key, fn);
@@ -75,18 +99,33 @@ function initWatch(vm, watch) {
   });
 }
 
+/**
+ * 创建watcher
+ *
+ * @param {*} vm
+ * @param {*} key
+ * @param {*} handler
+ * @return {*}
+ */
 function createWatcher(vm, key, handler) {
   return vm.$watch(key, handler);
 }
 
+/**
+ * 初始化computed
+ *
+ * @param {*} vm
+ * @param {*} computed
+ */
 function initComputed(vm, computed) {
   // 包含实例上所有的watcher属性
   const watchers = (vm._computedWatchers = {});
   Object.keys(computed).forEach((key) => {
+    // computed可能是函数也有可能是对象
     const userDef = computed[key];
     let getter = isFunction(userDef) ? userDef : userDef.get;
-    console.log("getter", getter);
-    // 每个计算属性, 本质上是一个watcher
+    // console.log('getter', getter);
+    // NOTE: 每个计算属性, 本质上是一个watcher
     watchers[key] = new Watcher(vm, getter, () => {}, {
       lazy: true,
     });
@@ -94,6 +133,13 @@ function initComputed(vm, computed) {
   });
 }
 
+/**
+ * 定义computed
+ *
+ * @param {*} vm
+ * @param {*} key
+ * @param {*} userDef
+ */
 function defineComputed(vm, key, userDef) {
   let sharedProperty = {};
   if (isFunction(userDef)) {

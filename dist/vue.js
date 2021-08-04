@@ -178,13 +178,13 @@
    * @LastEditTime: 2021-06-28 22:12:17
    */
   var isFunction = function isFunction(fn) {
-    return typeof fn === "function";
+    return typeof fn === 'function';
   };
   var isString = function isString(str) {
-    return typeof str === "string";
+    return typeof str === 'string';
   };
   var isObject = function isObject(obj) {
-    return _typeof(obj) === "object" && obj !== null;
+    return _typeof(obj) === 'object' && obj !== null;
   };
   var isArray = function isArray(arr) {
     return Array.isArray(arr);
@@ -213,14 +213,14 @@
         Promise.resolve().then(flushCallbacks);
       };
     } else if (MutationObserver) {
-      var textNode = document.createTextNode("1");
+      var textNode = document.createTextNode('1');
       var observe = new MutationObserver(flushCallbacks);
       observe.observe(textNode, {
         characterData: true
       });
 
       timerFn = function timerFn() {
-        textNode.textContent = "3";
+        textNode.textContent = '3';
       };
     } else if (setImmediate) {
       timerFn = function timerFn() {
@@ -243,8 +243,8 @@
       pending$1 = true;
     }
   }
-  var lifeCycleHooks = ["beforeCreate", "created", "beforeMount", "mounted", "beforeUpdate", "updated", "beforeDesotry", "destoryed"];
-  var strats = {};
+  var lifeCycleHooks = ['beforeCreate', 'created', 'beforeMount', 'mounted', 'beforeUpdate', 'updated', 'beforeDestory', 'destoryed'];
+  var structs = {};
 
   function mergeHook(parentVal, childVal) {
     if (childVal) {
@@ -259,7 +259,7 @@
   }
 
   lifeCycleHooks.forEach(function (hook) {
-    strats[hook] = mergeHook;
+    structs[hook] = mergeHook;
   });
   function mergeOptions(parent, child) {
     var options = {};
@@ -280,8 +280,8 @@
       var parentVal = parent[key];
       var childVal = child[key];
 
-      if (strats[key]) {
-        options[key] = strats[key](parentVal, childVal);
+      if (structs[key]) {
+        options[key] = structs[key](parentVal, childVal);
       } else if (isObject(parentVal) && isObject(childVal)) {
         options[key] = _objectSpread2(_objectSpread2({}, parentVal), childVal);
       } else {
@@ -730,8 +730,9 @@
         // 如果表达式是字符串, 转换成函数
         this.getter = function () {
           // 当数据取值时, 会进行依赖收集
-          var obj = vm;
-          return exprOrFn.split(".").reduce(function (a, b) {
+          var obj = vm; // 字符串有".", 说明是对象的多层
+
+          return exprOrFn.split('.').reduce(function (a, b) {
             return a[b];
           }, obj); // for (const item of exprOrFn.split('.')) {
           //   obj = obj[item];
@@ -740,10 +741,13 @@
         };
       } else {
         this.getter = exprOrFn;
-      }
+      } // 对应的收集
 
-      this.deps = [];
+
+      this.deps = []; // 对应的收集id
+
       this.depsId = new Set(); // 默认的初始化操作
+      // lazy指的是computed
 
       this.value = this.lazy ? undefined : this.get();
     } // 数据更新时, 重新调用getter
@@ -790,8 +794,8 @@
         var newValue = this.get();
         var oldValue = this.value; // 替换旧值
 
-        this.value = newValue;
-        console.log("this.cb", this.cb);
+        this.value = newValue; // console.log('this.cb', this.cb);
+
         this.user && this.cb.call(this.vm, newValue, oldValue);
       }
     }, {
@@ -1033,8 +1037,9 @@
   function stateMixin(Vue) {
     Vue.prototype.$watch = function (key, handler) {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      // user标识
       options.user = true;
-      var watcher = new Watcher(this, key, handler, options);
+      var watcher = new Watcher(this, key, handler, options); // 立即执行
 
       if (options.immediate) {
         handler(watcher.value);
@@ -1059,6 +1064,14 @@
       initWatch(vm, opts.watch);
     }
   }
+  /**
+   * 代理
+   *
+   * @param {*} vm 实例this
+   * @param {*} source 目标source
+   * @param {*} key key值
+   * @return {*}
+   */
 
   function proxy(vm, source, key) {
     Object.defineProperty(vm, key, {
@@ -1070,21 +1083,35 @@
       }
     });
   }
+  /**
+   * 初始化data, 如果是函数就执行并绑定this到实例上, 进行响应式监听
+   *
+   * @param {*} vm
+   */
+
 
   function initData(vm) {
     var data = vm.$options.data;
-    data = vm._data = isFunction(data) ? data.call(vm) : data;
+    data = vm._data = isFunction(data) ? data.call(vm) : data; // 通过_data进行代理
 
     for (var key in data) {
-      proxy(vm, "_data", key);
-    }
+      proxy(vm, '_data', key);
+    } // 对数据进行响应式监听
+
 
     observe(data);
   }
+  /**
+   * 初始化watch
+   *
+   * @param {*} vm
+   * @param {*} watch
+   */
+
 
   function initWatch(vm, watch) {
     Object.keys(watch).forEach(function (key) {
-      var handler = watch[key];
+      var handler = watch[key]; // handler是否是数组
 
       if (isArray(handler)) {
         var _iterator = _createForOfIteratorHelper(handler),
@@ -1105,18 +1132,35 @@
       }
     });
   }
+  /**
+   * 创建watcher
+   *
+   * @param {*} vm
+   * @param {*} key
+   * @param {*} handler
+   * @return {*}
+   */
+
 
   function createWatcher(vm, key, handler) {
     return vm.$watch(key, handler);
   }
+  /**
+   * 初始化computed
+   *
+   * @param {*} vm
+   * @param {*} computed
+   */
+
 
   function initComputed(vm, computed) {
     // 包含实例上所有的watcher属性
     var watchers = vm._computedWatchers = {};
     Object.keys(computed).forEach(function (key) {
+      // computed可能是函数也有可能是对象
       var userDef = computed[key];
-      var getter = isFunction(userDef) ? userDef : userDef.get;
-      console.log("getter", getter); // 每个计算属性, 本质上是一个watcher
+      var getter = isFunction(userDef) ? userDef : userDef.get; // console.log('getter', getter);
+      // NOTE: 每个计算属性, 本质上是一个watcher
 
       watchers[key] = new Watcher(vm, getter, function () {}, {
         lazy: true
@@ -1124,6 +1168,14 @@
       defineComputed(vm, key, userDef);
     });
   }
+  /**
+   * 定义computed
+   *
+   * @param {*} vm
+   * @param {*} key
+   * @param {*} userDef
+   */
+
 
   function defineComputed(vm, key, userDef) {
     var sharedProperty = {};
@@ -1179,11 +1231,12 @@
 
   function initMixin(Vue) {
     Vue.prototype._init = function (options) {
-      var vm = this;
+      var vm = this; // vm.constructor.options, 继承的时候不一定是根Vue可能是Vue.extends. 所以要找到构造函数, 找构造函数上的options
+
       vm.$options = mergeOptions(vm.constructor.options, options);
-      callHook(vm, "beforeCreate");
+      callHook(vm, 'beforeCreate');
       initState(vm);
-      callHook(vm, "created");
+      callHook(vm, 'created');
 
       if (vm.$options.el) {
         // 将数据挂在模板上

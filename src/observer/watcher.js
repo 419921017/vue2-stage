@@ -1,6 +1,6 @@
-import { isString } from "../utils";
-import { popTarget, pushTarget } from "./dep";
-import { queueWatcher } from "./scheduler";
+import { isString } from '../utils';
+import { popTarget, pushTarget } from './dep';
+import { queueWatcher } from './scheduler';
 
 /*
  * @Descripttion: your project
@@ -29,7 +29,8 @@ class Watcher {
       this.getter = function () {
         // 当数据取值时, 会进行依赖收集
         let obj = vm;
-        return exprOrFn.split(".").reduce((a, b) => a[b], obj);
+        // 字符串有".", 说明是对象的多层
+        return exprOrFn.split('.').reduce((a, b) => a[b], obj);
         // for (const item of exprOrFn.split('.')) {
         //   obj = obj[item];
         // }
@@ -38,9 +39,12 @@ class Watcher {
     } else {
       this.getter = exprOrFn;
     }
+    // 对应的收集
     this.deps = [];
+    // 对应的收集id
     this.depsId = new Set();
     // 默认的初始化操作
+    // lazy指的是computed
     this.value = this.lazy ? undefined : this.get();
   }
   // 数据更新时, 重新调用getter
@@ -78,7 +82,7 @@ class Watcher {
     let oldValue = this.value;
     // 替换旧值
     this.value = newValue;
-    console.log("this.cb", this.cb);
+    // console.log('this.cb', this.cb);
     this.user && this.cb.call(this.vm, newValue, oldValue);
   }
   evaluate() {

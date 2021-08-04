@@ -7,10 +7,10 @@
  * @LastEditTime: 2021-06-28 22:12:29
  */
 
-import { compileToFunction } from "./compiler";
-import { callHook, mountComponent } from "./lifecycle";
-import { initState } from "./state";
-import { mergeOptions } from "./utils";
+import { compileToFunction } from './compiler';
+import { callHook, mountComponent } from './lifecycle';
+import { initState } from './state';
+import { mergeOptions } from './utils';
 
 /**
  *
@@ -21,10 +21,11 @@ import { mergeOptions } from "./utils";
 export function initMixin(Vue) {
   Vue.prototype._init = function (options) {
     const vm = this;
+    // vm.constructor.options, 继承的时候不一定是根Vue可能是Vue.extends. 所以要找到构造函数, 找构造函数上的options
     vm.$options = mergeOptions(vm.constructor.options, options);
-    callHook(vm, "beforeCreate");
+    callHook(vm, 'beforeCreate');
     initState(vm);
-    callHook(vm, "created");
+    callHook(vm, 'created');
     if (vm.$options.el) {
       // 将数据挂在模板上
       vm.$mount(vm.$options.el);

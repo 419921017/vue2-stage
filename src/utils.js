@@ -6,10 +6,10 @@
  * @LastEditors: power_840
  * @LastEditTime: 2021-06-28 22:12:17
  */
-export const isFunction = (fn) => typeof fn === "function";
-export const isString = (str) => typeof str === "string";
-export const isNumber = (num) => typeof num === "number";
-export const isObject = (obj) => typeof obj === "object" && obj !== null;
+export const isFunction = (fn) => typeof fn === 'function';
+export const isString = (str) => typeof str === 'string';
+export const isNumber = (num) => typeof num === 'number';
+export const isObject = (obj) => typeof obj === 'object' && obj !== null;
 export const isArray = (arr) => Array.isArray(arr);
 
 const callbacks = [];
@@ -33,13 +33,13 @@ function timer(flushCallbacks) {
       Promise.resolve().then(flushCallbacks);
     };
   } else if (MutationObserver) {
-    let textNode = document.createTextNode("1");
+    let textNode = document.createTextNode('1');
     let observe = new MutationObserver(flushCallbacks);
     observe.observe(textNode, {
       characterData: true,
     });
     timerFn = () => {
-      textNode.textContent = "3";
+      textNode.textContent = '3';
     };
   } else if (setImmediate) {
     timerFn = () => {
@@ -63,17 +63,17 @@ export function nextTick(cb) {
 }
 
 let lifeCycleHooks = [
-  "beforeCreate",
-  "created",
-  "beforeMount",
-  "mounted",
-  "beforeUpdate",
-  "updated",
-  "beforeDesotry",
-  "destoryed",
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestory',
+  'destoryed',
 ];
 
-let strats = {};
+let structs = {};
 
 function mergeHook(parentVal, childVal) {
   if (childVal) {
@@ -88,7 +88,7 @@ function mergeHook(parentVal, childVal) {
 }
 
 lifeCycleHooks.forEach((hook) => {
-  strats[hook] = mergeHook;
+  structs[hook] = mergeHook;
 });
 
 export function mergeOptions(parent, child) {
@@ -105,8 +105,8 @@ export function mergeOptions(parent, child) {
   function mergeFieId(key) {
     let parentVal = parent[key];
     let childVal = child[key];
-    if (strats[key]) {
-      options[key] = strats[key](parentVal, childVal);
+    if (structs[key]) {
+      options[key] = structs[key](parentVal, childVal);
     } else if (isObject(parentVal) && isObject(childVal)) {
       options[key] = { ...parentVal, ...childVal };
     } else {
