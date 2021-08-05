@@ -14,7 +14,15 @@ import { nextTick } from './utils';
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function (vnode) {
     const vm = this;
-    vm.$el = patch(vm.$el, vnode);
+
+    const prevNode = vm._vnode;
+    // 没有prevNode, 说明是初次挂载
+    if (!prevNode) {
+      vm.$el = patch(vm.$el, vnode);
+      vm._vnode = vnode;
+    } else {
+      vm.$el = patch(prevNode, vnode);
+    }
   };
   Vue.prototype.$nextTick = nextTick;
 }

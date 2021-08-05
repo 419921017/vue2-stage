@@ -617,7 +617,8 @@
     if (!oldVnode) {
       // 直接将虚拟节点转换成真实节点
       return createEle(vnode);
-    }
+    } // 元素节点
+
 
     if (oldVnode.nodeType == 1) {
       // console.log("真实节点");
@@ -626,6 +627,77 @@
       parentElm.insertBefore(elm, oldVnode.nextSibling);
       parentElm.removeChild(oldVnode);
       return elm;
+    } else {
+      // 标签名不一致, 直接替换
+      if (oldVnode.tag !== vnode.tag) {
+        return oldVnode.el.parentNode.replaceChild(createEle(vnode), oldVnode.el);
+      } // 如果两个虚拟节点是文本节点, 需要比较本文内容
+      // 新的标签和老的标签都是undefined, 两者都是文本
+
+
+      if (vnode.tag == undefined) {
+        if (oldVnode.text !== vnode.text) {
+          el.textContent = vnode.text;
+        }
+      } // 标签一样, 新节点el复用老节点的el
+
+
+      vnode.el = oldVnode.el; // 如果标签一样, 比较属性
+
+      patchProps(vnode, oldVnode.data);
+      var newChildren = vnode.children || [];
+      var oldChildren = oldVnode.children || [];
+
+      if (oldChildren.length > 0 && newChildren.length > 0) {
+        patchChildren(el, oldChildren, newChildren);
+      } else if (newChildren.length > 0) {
+        var _iterator = _createForOfIteratorHelper(newChildren),
+            _step;
+
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var single = _step.value;
+            var child = createEle(single);
+            el.appendChild(child);
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+      } else if (oldChildren.length > 0) {
+        el.innerHTML = "";
+      }
+    }
+  }
+
+  function isSameVnode(oldVnode, newVnode) {
+    return oldVnode.tag == newVnode.tag && oldVnode.key == newVnode.key;
+  }
+  /**
+   * vue的diff算法使用的是双指针
+   *
+   * @param {*} el
+   * @param {*} oldChildren
+   * @param {*} newChildren
+   */
+
+
+  function patchChildren(el, oldChildren, newChildren) {
+    var oldStartIndex = 0;
+    var oldStartVnode = oldChildren[0];
+    var oldEndIndex = oldChildren.length - 1;
+    oldChildren[oldChildren.length - 1];
+    var newStartIndex = 0;
+    var newStartNode = newChildren[0];
+    var newEndIndex = newChildren.length - 1;
+    newChildren[newChildren.length - 1]; // 同时循环老的和新的节点, 有一方循环完了就直接结束
+
+    while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
+      if (isSameVnode(oldStartVnode, newStartVnode)) {
+        // 头头比较
+        patch(oldStartVnode, newStartNode);
+      }
     }
   }
   /**
@@ -635,6 +707,7 @@
    * @param {*} vnode
    * @return {*}
    */
+
 
   function createEle(vnode) {
     var tag = vnode.tag;
@@ -650,7 +723,8 @@
       }
 
       vnode.el = document.createElement(tag);
-      updateProperties(vnode);
+      patchProps(vnode); // updateProperties(vnode);
+
       children.forEach(function (child) {
         vnode.el.appendChild(createEle(child));
       });
@@ -660,18 +734,43 @@
 
     return vnode.el;
   }
+  /**
+   * 初次渲染挂载属性
+   * 再次渲染, 更新属性
+   * @param {*} vnode
+   * @param {*} newProps
+   */
 
-  function updateProperties(vnode) {
+  function patchProps(vnode) {
+    var oldProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     var newProps = vnode.data || {};
     var el = vnode.el;
+    var newStyle = newProps.style || {};
+    var oldStyle = oldProps.style || {}; // 老的有, 新的没有, 需要删除
 
-    for (var key in newProps) {
-      if (key == 'style') {
+    for (var key in oldStyle) {
+      if (Object.hasOwnProperty.call(oldStyle, key)) {
+        if (!newStyle[key]) {
+          el.style[key] = '';
+        }
+      }
+    }
+
+    for (var _key in oldProps) {
+      if (Object.hasOwnProperty.call(oldProps, _key)) {
+        if (!newProps[_key]) {
+          el.removeAttribute(_key);
+        }
+      }
+    }
+
+    for (var _key2 in newProps) {
+      if (_key2 == 'style') {
         for (var styleName in newProps.style) {
           el.style[styleName] = newProps.style[styleName];
         }
       } else {
-        el.setAttribute(key, newProps[key]);
+        el.setAttribute(_key2, newProps[_key2]);
       }
     }
   }
