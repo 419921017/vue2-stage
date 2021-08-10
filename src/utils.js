@@ -17,6 +17,7 @@ let pending = false;
 
 const flushCallbacks = () => {
   callbacks.forEach((cb) => cb());
+  callbacks.length = 0;
   pending = false;
 };
 
