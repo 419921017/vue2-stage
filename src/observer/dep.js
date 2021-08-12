@@ -22,6 +22,9 @@ class Dep {
   addSub(watcher) {
     this.subs.push(watcher);
   }
+  removeSub(watcher) {
+    this.subs = this.subs.filter((w) => w.id != watcher.id);
+  }
   notify() {
     this.subs.forEach((watcher) => watcher.update());
   }

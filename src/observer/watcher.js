@@ -56,7 +56,15 @@ class Watcher {
     const value = this.getter.call(this.vm);
     // Dep.target = null, 如果Dep.target有值, 说明值在模板中使用了
     popTarget();
+    this.cleanupDeps();
     return value;
+  }
+  cleanupDeps() {
+    let i = this.deps.length;
+    while (i--) {
+      const dep = this.deps[i];
+      dep.removeSub(this);
+    }
   }
   addDep(dep) {
     let id = dep.id;

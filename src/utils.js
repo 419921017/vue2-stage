@@ -16,6 +16,8 @@ const callbacks = [];
 let pending = false;
 
 const flushCallbacks = () => {
+  // watcher排序, 排序完之后在更新
+  callbacks.sort((a, b) => a.id - b.id);
   callbacks.forEach((cb) => cb());
   callbacks.length = 0;
   pending = false;
